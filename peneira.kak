@@ -1,3 +1,5 @@
+declare-option -hidden str peneira_path %sh{ dirname $kak_source }
+
 define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
@@ -27,10 +29,12 @@ define-command -hidden peneira-replace-buffer -params 2 %{
     # arg1: prompt text
     # arg2: original lines
     evaluate-commands -buffer *peneira* %{
-        lua %arg{@} %{
+        lua %opt{peneira_path} %arg{@} %{
+            local peneira_path, prompt, lines = args()
+
+            package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
             local fzy = require "fzy"
 
-            local prompt, lines = args()
             local filtered = {}
 
             for line in lines:gmatch("[^\n]*") do
@@ -39,8 +43,21 @@ define-command -hidden peneira-replace-buffer -params 2 %{
         		end
     		end
 
+    		local score_cache = {}
+
     		table.sort(filtered, function(a, b)
-    			return fzy.score(prompt, a) > fzy.score(prompt, b)
+    			local score_a, score_b = score_cache[a], score_cache[b]
+
+    			if not score_a then
+    				score_a = fzy.score(prompt, a)
+    			end
+
+    			if not score_b then
+    				score_b = fzy.score(prompt, b)
+    			end
+
+    			score_cache[a], score_cache[b] = score_a, score_b
+    			return score_a > score_b
     		end)
 
     		local keys = string.format("%%c%s<esc>", table.concat(filtered, "\n"))
