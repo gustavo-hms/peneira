@@ -1,60 +1,52 @@
-define-command peneira-filter -params 1 -docstring %{
+define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
     edit -scratch *peneira*
-    set-option -remove buffer autocomplete insert
+    set-register dquote %sh{ printf '%s\n' $1  }
+    execute-keys '%Rgg'
 
-    lua "%arg{1}" %{
-        kak.hook("-group", "peneira", "buffer", "InsertKey", ".*", string.format("peneira-update-buffer '%s'", arg[1]))
-    }
+    prompt -on-change %{
+        evaluate-commands -buffer *peneira* %{
+            lua %val{text} %arg{1} %{
+                local search, lines = args()
 
-    map buffer insert <backspace> '<esc>: peneira-map-del<ret>i'
+                if #search > 0 then
+                	local commands = [[ printf "%%s\n" "%s" | fzf -f "%s" ]]
+                	local filtered = io.popen(commands:format(lines, search)):read("a")
+                	kak.execute_keys(string.format("%%c%s<esc>", filtered))
 
-    execute-keys "o%arg{1}<esc>ggi❯ <esc>"
-}
-
-define-command -hidden peneira-map-del %{
-    evaluate-commands -save-regs p %{
-        peneira-copy-prompt
-        lua %val{cursor_byte_offset} %{
-            local prompt = "❯ "
-            if arg[1] > #prompt then
-            	kak.execute_keys("hd")
-        	end
-        }
-    }
-}
-
-define-command -hidden peneira-copy-prompt %{
-    # Copy prompt contents to register p
-    execute-keys -buffer *peneira* 'ggxH"py'
-}
-
-# Receive the unfiltered lines
-define-command -hidden peneira-update-buffer -params 1 %{
-    evaluate-commands -save-regs pa %{
-        peneira-copy-prompt
-
-        # Copy filtered lines to register a
-        lua %reg{p} %arg{1} %{
-            local prompt, lines = args()
-            prompt = prompt:gsub("❯ ", "")
-         	local command = string.format("printf '%%s\n' '%s' | fzf -f '%s'", lines, prompt)
-         	local filtered = io.popen(command):read("a")
-         	kak.set_register("a", filtered)
+                else
+                	kak.execute_keys(string.format("%%c%s<esc>", lines))
+                end
+            }
         }
 
-        # Delete all but the prompt line and paste lines
-        try %{
-            execute-keys -buffer *peneira* '%<a-s>)<a-space>d'
+        execute-keys '<a-;>gg'
+
+    } -on-abort %{
+        delete-buffer *peneira*
+
+    } 'Filter: ' %{
+        evaluate-commands -save-regs ac %{
+            execute-keys -buffer *peneira* ggx_\"ay
+            set-register c "%arg{2}"
+            peneira-call "%reg{a}"
         }
 
-        execute-keys -buffer *peneira* 'gg"ap'
+        delete-buffer *peneira*
     }
+}
+
+# Calls the command stored in the c register. This way, that command can use the
+# argument passed to peneira-call as if it was an argument passed to it.
+define-command -hidden peneira-call -params 1 %{
+    evaluate-commands "%reg{c}"
 }
 
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira-filter %sh{ fd }
+    peneira-filter %sh{ fd } %{
+        edit %arg{1}
+    }
 }
