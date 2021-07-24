@@ -6,21 +6,7 @@ define-command peneira-filter -params 2 -docstring %{
     execute-keys '%Rgg'
 
     prompt -on-change %{
-        evaluate-commands -buffer *peneira* %{
-            lua %val{text} %arg{1} %{
-                local search, lines = args()
-
-                if #search > 0 then
-                	local commands = [[ printf "%%s\n" "%s" | fzf -f "%s" ]]
-                	local filtered = io.popen(commands:format(lines, search)):read("a")
-                	kak.execute_keys(string.format("%%c%s<esc>", filtered))
-
-                else
-                	kak.execute_keys(string.format("%%c%s<esc>", lines))
-                end
-            }
-        }
-
+        peneira-replace-buffer "%val{text}" "%arg{1}"
         execute-keys '<a-;>gg'
 
     } -on-abort %{
@@ -34,6 +20,33 @@ define-command peneira-filter -params 2 -docstring %{
         }
 
         delete-buffer *peneira*
+    }
+}
+
+define-command -hidden peneira-replace-buffer -params 2 %{
+    # arg1: prompt text
+    # arg2: original lines
+    evaluate-commands -buffer *peneira* %{
+        lua %arg{@} %{
+            local fzy = require "fzy"
+
+            local prompt, lines = args()
+            local filtered = {}
+
+            for line in lines:gmatch("[^\n]*") do
+            	if fzy.has_match(prompt, line) then
+            		filtered[#filtered + 1] = line
+        		end
+    		end
+
+    		table.sort(filtered, function(a, b)
+    			return fzy.score(prompt, a) > fzy.score(prompt, b)
+    		end)
+
+    		local keys = string.format("%%c%s<esc>", table.concat(filtered, "\n"))
+
+    		kak.execute_keys(keys)
+		}
     }
 }
 
