@@ -5,6 +5,7 @@ define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
     edit -scratch *peneira*
+	remove-highlighter window/number-lines
 
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
