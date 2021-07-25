@@ -32,6 +32,11 @@ define-command -hidden peneira-replace-buffer -params 2 %{
         lua %opt{peneira_path} %arg{@} %{
             local peneira_path, prompt, lines = args()
 
+            if #prompt == 0 then
+        		kak.execute_keys(string.format("%%c%s<esc>", lines))
+        		return
+    		end
+
             package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
             local fzy = require "fzy"
 
@@ -61,7 +66,6 @@ define-command -hidden peneira-replace-buffer -params 2 %{
     		end)
 
     		local keys = string.format("%%c%s<esc>", table.concat(filtered, "\n"))
-
     		kak.execute_keys(keys)
 		}
     }
