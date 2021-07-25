@@ -9,7 +9,7 @@ define-command peneira-filter -params 2 -docstring %{
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
 
-    execute-keys "%%c%sh{ printf '%%s\n' $1 }"
+    execute-keys "%%c%sh{ printf '%%s\n' $1 }<esc>"
 
     prompt -on-change %{
         peneira-replace-buffer "%val{text}" "%arg{1}"
