@@ -22,7 +22,6 @@ local SCORE_GAP_INNER = -0.01
 local SCORE_MATCH_CONSECUTIVE = 1.0
 local SCORE_MATCH_SLASH = 0.9
 local SCORE_MATCH_WORD = 0.8
-local SCORE_MATCH_CAPITAL = 0.7
 local SCORE_MATCH_DOT = 0.6
 local SCORE_MAX = math.huge
 local SCORE_MIN = -math.huge
@@ -47,14 +46,6 @@ function fzy.has_match(needle, haystack)
   return true
 end
 
-local function is_lower(c)
-  return c:match "%l"
-end
-
-local function is_upper(c)
-  return c:match "%u"
-end
-
 local function precompute_bonus(haystack)
   local match_bonus = {}
 
@@ -67,8 +58,6 @@ local function precompute_bonus(haystack)
       match_bonus[i] = SCORE_MATCH_WORD
     elseif last_char == "." then
       match_bonus[i] = SCORE_MATCH_DOT
-    elseif is_lower(last_char) and is_upper(this_char) then
-      match_bonus[i] = SCORE_MATCH_CAPITAL
     else
       match_bonus[i] = 0
     end
