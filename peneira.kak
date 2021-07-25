@@ -4,8 +4,7 @@ define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
     edit -scratch *peneira*
-    set-register dquote %sh{ printf '%s\n' $1  }
-    execute-keys '%Rgg'
+    execute-keys "%%c%sh{ printf '%%s\n' $1 }"
 
     prompt -on-change %{
         peneira-replace-buffer "%val{text}" "%arg{1}"
