@@ -6,12 +6,7 @@ define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
     edit -scratch *peneira*
-	remove-highlighter window/number-lines
-	add-highlighter window/current-line line %opt{peneira_selected_line} %opt{peneira_face_selected}
-	face window PrimaryCursor %opt{peneira_face_selected}
-
-	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
-	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
+    peneira-configure-buffer
 
     execute-keys "%%c%sh{ printf '%%s\n' $1 }<esc>"
 
@@ -31,6 +26,14 @@ define-command peneira-filter -params 2 -docstring %{
 
         delete-buffer *peneira*
     }
+}
+
+define-command -hidden peneira-configure-buffer %{
+	remove-highlighter window/number-lines
+	add-highlighter window/current-line line %opt{peneira_selected_line} %opt{peneira_face_selected}
+	face window PrimaryCursor %opt{peneira_face_selected}
+	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
+	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
 }
 
 define-command -hidden peneira-select-previous-line %{
