@@ -69,28 +69,17 @@ define-command -hidden peneira-replace-buffer -params 2 %{
             local fzy = require "fzy"
 
             local filtered = {}
+            local score_cache = {}
 
             for line in lines:gmatch("[^\n]*") do
             	if fzy.has_match(prompt, line) then
             		filtered[#filtered + 1] = line
+                    score_cache[line] = fzy.score(prompt, line)
         		end
     		end
 
-    		local score_cache = {}
-
     		table.sort(filtered, function(a, b)
-    			local score_a, score_b = score_cache[a], score_cache[b]
-
-    			if not score_a then
-    				score_a = fzy.score(prompt, a)
-    			end
-
-    			if not score_b then
-    				score_b = fzy.score(prompt, b)
-    			end
-
-    			score_cache[a], score_cache[b] = score_a, score_b
-    			return score_a > score_b
+                return score_cache[a] > score_cache[b]
     		end)
 
     		local keys = string.format("%%c%s<esc>", table.concat(filtered, "\n"))
