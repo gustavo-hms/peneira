@@ -1,11 +1,14 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 declare-option -hidden str peneira_selected_line 1
+declare-option -hidden str peneira_face_selected @MenuForeground
 
 define-command peneira-filter -params 2 -docstring %{
     peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
 } %{
     edit -scratch *peneira*
 	remove-highlighter window/number-lines
+	add-highlighter window/current-line line %opt{peneira_selected_line} %opt{peneira_face_selected}
+	face window PrimaryCursor %opt{peneira_face_selected}
 
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
@@ -31,26 +34,20 @@ define-command peneira-filter -params 2 -docstring %{
 }
 
 define-command -hidden peneira-select-previous-line %{
-    lua %opt{peneira_selected_line} %{
-        local selected = arg[1]
-
-        if selected == 1 then
-        	selected = 2
-    	end
-
-        kak.set_option("buffer", "peneira_selected_line", selected - 1)
+    lua %opt{peneira_selected_line} %opt{peneira_face_selected} %{
+        local selected, face = args()
+        selected = selected > 1 and selected - 1 or selected
+        kak.set_option("buffer", "peneira_selected_line", selected)
+    	kak.add_highlighter("-override", "window/current-line", "line", selected, face)
     }
 }
 
 define-command -hidden peneira-select-next-line %{
-    lua %opt{peneira_selected_line} %val{buf_line_count} %{
-        local selected, line_count = args()
-
-        if selected >= line_count then
-        	selected = line_count - 1
-    	end
-
-        kak.set_option("buffer", "peneira_selected_line", selected + 1)
+    lua %opt{peneira_selected_line} %opt{peneira_face_selected} %val{buf_line_count} %{
+        local selected, face, line_count = args()
+        selected = selected < line_count and selected + 1 or selected
+        kak.set_option("buffer", "peneira_selected_line", selected)
+    	kak.add_highlighter("-override", "window/current-line", "line", selected, face)
     }
 }
 
