@@ -4,7 +4,7 @@ declare-option -hidden str peneira_selected_line 1
 set-face global PeneiraSelected @MenuForeground
 
 define-command peneira-filter -params 2 -docstring %{
-    peneira-filter <lines> <cmd>: filter <lines> and then run <cmd> with its first argument set to the selected line.
+    peneira-filter <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
     edit -scratch *peneira*
     peneira-configure-buffer
@@ -57,13 +57,13 @@ define-command -hidden peneira-select-next-line %{
 
 define-command -hidden peneira-replace-buffer -params 2 %{
     # arg1: prompt text
-    # arg2: original lines
+    # arg2: candidates
     evaluate-commands -buffer *peneira* %{
         lua %opt{peneira_path} %arg{@} %{
-            local peneira_path, prompt, lines = args()
+            local peneira_path, prompt, candidates = args()
 
             if #prompt == 0 then
-        		kak.execute_keys(string.format("%%c%s<esc>", lines))
+        		kak.execute_keys(string.format("%%c%s<esc>", candidates))
         		return
     		end
 
@@ -73,10 +73,10 @@ define-command -hidden peneira-replace-buffer -params 2 %{
             local filtered = {}
             local score_cache = {}
 
-            for line in lines:gmatch("[^\n]*") do
-            	if fzy.has_match(prompt, line) then
-            		filtered[#filtered + 1] = line
-                    score_cache[line] = fzy.score(prompt, line)
+            for candidate in candidates:gmatch("[^\n]*") do
+            	if fzy.has_match(prompt, candidate) then
+            		filtered[#filtered + 1] = candidate
+                    score_cache[candidate] = fzy.score(prompt, candidate)
         		end
     		end
 
