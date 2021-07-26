@@ -74,7 +74,15 @@ local function precompute_bonus(haystack)
     return match_bonus
 end
 
-local function compute(needle, haystack, D, M)
+local cache = {}
+
+local function compute(needle, haystack)
+    if cache[needle] and cache[needle][haystack] then
+        local matrices = cache[needle][haystack]
+        return matrices[1], matrices[2]
+    end
+
+    local D, M = {}, {}
     local match_bonus = precompute_bonus(haystack)
     local n = string.len(needle)
     local m = string.len(haystack)
@@ -116,6 +124,10 @@ local function compute(needle, haystack, D, M)
             end
         end
     end
+
+    cache[needle] = cache[needle] or {}
+    cache[needle][haystack] = { M, D }
+    return M, D
 end
 
 function fzy.score(needle, haystack)
@@ -127,9 +139,7 @@ function fzy.score(needle, haystack)
     elseif n == m then
         return SCORE_MAX
     else
-        local D = {}
-        local M = {}
-        compute(needle, haystack, D, M)
+        local M = compute(needle, haystack)
         return M[n][m]
     end
 end
@@ -148,9 +158,7 @@ function fzy.positions(needle, haystack)
         return consecutive
     end
 
-    local D = {}
-    local M = {}
-    compute(needle, haystack, D, M)
+    local M, D = compute(needle, haystack)
 
     local positions = {}
     local match_required = false

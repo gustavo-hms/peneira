@@ -79,7 +79,7 @@ define-command -hidden peneira-replace-buffer -params 2 %{
         local fzy = require "fzy"
 
         local filtered = {}
-        local score_cache = {}
+        local scores = {}
 
         -- Treat each word in prompt as a new, refined, search
         local prompt_words = {}
@@ -91,68 +91,63 @@ define-command -hidden peneira-replace-buffer -params 2 %{
         for candidate in candidates:gmatch("[^\n]+") do
         	if fzy.has_match(prompt_words[1], candidate) then
         		filtered[#filtered + 1] = candidate
-                score_cache[candidate] = fzy.score(prompt_words[1], candidate)
+                scores[candidate] = fzy.score(prompt_words[1], candidate)
     		end
 		end
 
-		-- Filter again, now using the other words
+		-- Filter again, now using the remaining words
 		for i = 2, #prompt_words do
 		    local refined = {}
 
 		    for _, candidate in ipairs(filtered) do
             	if fzy.has_match(prompt_words[i], candidate) then
             	    refined[#refined + 1] = candidate
-                    score_cache[candidate] = score_cache[candidate] + fzy.score(prompt_words[i], candidate)
+                    scores[candidate] = scores[candidate] + fzy.score(prompt_words[i], candidate)
             	end
             end
 
             filtered = refined
         end
 
+        -- Sort filtered candidates based on their scores
 		table.sort(filtered, function(a, b)
-            return score_cache[a] > score_cache[b]
+            return scores[a] > scores[b]
 		end)
 
-        local contents = table.concat(filtered, "\n")
-		kak.execute_keys(string.format("%%c%s<esc>", contents))
-		kak.peneira_highlight_matches(prompt, contents)
-	}
-}
+		kak.execute_keys(string.format("%%c%s<esc>", table.concat(filtered, "\n")))
 
-# arg1: prompt text
-# arg2: candidates
-define-command -hidden peneira-highlight-matches -params 2 %{
-	lua %opt{peneira_path} %val{timestamp} %arg{@} %{
-		local peneira_path, timestamp, prompt, lines = args()
+        -- Highlight matches
+		local range_specs = {}
 
-		if #prompt == 0 then
-		    return
-	    end
-
-        -- Add plugin path to the list of path to be searched by `require`
-        package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
-        local fzy = require "fzy"
-
-		local descriptors = {}
-		local line_number = 0
-
-		for line in lines:gmatch("[^\n]+") do
-		    line_number = line_number + 1
-
-		    if line_number > 50 then
+		for i, line in ipairs(filtered) do
+		    if i > 50 then
 		        break
 		    end
 
-            for word in prompt:gmatch("%S+") do
+            for _, word in ipairs(prompt_words) do
                 local positions = fzy.positions(word, line)
 
     		    for _, position in pairs(positions) do
-    		        descriptors[#descriptors + 1] = string.format("%d.%d,%d.%d|@PeneiraMatches", line_number, position, line_number, position)
+    		        range_specs[#range_specs + 1] = string.format("%d.%d,%d.%d|@PeneiraMatches", i, position, i, position)
     		    end
             end
         end
 
-        kak.set_option("buffer", "peneira_matches", timestamp, unpack(descriptors))
+		kak.peneira_highlight_matches(table.concat(range_specs, "\n"))
+	}
+}
+
+# arg: range specs
+define-command -hidden peneira-highlight-matches -params 1 %{
+	lua %val{timestamp} %arg{1} %{
+		local timestamp, range_specs_text = args()
+		local range_specs = {}
+
+        for spec in range_specs_text:gmatch("[^\n]+") do
+            range_specs[#range_specs + 1] = spec
+        end
+
+        kak.set_option("buffer", "peneira_matches", timestamp, unpack(range_specs))
 	}
 }
 
