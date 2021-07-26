@@ -2,7 +2,7 @@ declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 declare-option -hidden str peneira_selected_line 1
 declare-option -hidden range-specs peneira_matches
 
-set-face global PeneiraSelected default,rgba:44444444
+set-face global PeneiraSelected default,rgba:44444422
 set-face global PeneiraMatches value
 
 define-command peneira-filter -params 3 -docstring %{
@@ -10,13 +10,11 @@ define-command peneira-filter -params 3 -docstring %{
 } %{
     edit -scratch *peneira*
     peneira-configure-buffer
-
     execute-keys "%%c%arg{2}<esc>gg"
 
     prompt -on-change %{
         evaluate-commands -buffer *peneira* %{
             peneira-replace-buffer "%val{text}" "%arg{2}"
-            add-highlighter -override buffer/peneira-matches ranges peneira_matches
         }
 
         execute-keys "<a-;>%opt{peneira_selected_line}g"
@@ -38,6 +36,7 @@ define-command peneira-filter -params 3 -docstring %{
 define-command -hidden peneira-configure-buffer %{
 	remove-highlighter window/number-lines
 	add-highlighter window/current-line line %opt{peneira_selected_line} PeneiraSelected
+    add-highlighter window/peneira-matches ranges peneira_matches
 	face window PrimaryCursor @PeneiraSelected
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
