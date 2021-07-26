@@ -1,7 +1,9 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 declare-option -hidden str peneira_selected_line 1
+declare-option -hidden range-specs peneira_matches
 
-set-face global PeneiraSelected @MenuForeground
+set-face global PeneiraSelected default,rgba:44444444
+set-face global PeneiraMatches value
 
 define-command peneira-filter -params 3 -docstring %{
     peneira-filter <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
@@ -12,7 +14,11 @@ define-command peneira-filter -params 3 -docstring %{
     execute-keys "%%c%arg{2}<esc>gg"
 
     prompt -on-change %{
-        peneira-replace-buffer "%val{text}" "%arg{2}"
+        evaluate-commands -buffer *peneira* %{
+            peneira-replace-buffer "%val{text}" "%arg{2}"
+            add-highlighter -override buffer/peneira-matches ranges peneira_matches
+        }
+
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
     } -on-abort %{
@@ -57,61 +63,97 @@ define-command -hidden peneira-select-next-line %{
     }
 }
 
+# arg1: prompt text
+# arg2: candidates
 define-command -hidden peneira-replace-buffer -params 2 %{
-    # arg1: prompt text
-    # arg2: candidates
-    evaluate-commands -buffer *peneira* %{
-        lua %opt{peneira_path} %arg{@} %{
-            local peneira_path, prompt, candidates = args()
+    lua %opt{peneira_path} %arg{@} %{
+        local peneira_path, prompt, candidates = args()
 
-            if #prompt == 0 then
-        		kak.execute_keys(string.format("%%c%s<esc>", candidates))
-        		return
+        if #prompt == 0 then
+    		kak.execute_keys(string.format("%%c%s<esc>", candidates))
+    		return
+		end
+
+        -- Add plugin path to the list of path to be searched by `require`
+        package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
+        local fzy = require "fzy"
+
+        local filtered = {}
+        local score_cache = {}
+
+        -- Treat each word in prompt as a new, refined, search
+        local prompt_words = {}
+
+        for word in prompt:gmatch("%S+") do
+            prompt_words[#prompt_words + 1] = word
+        end
+
+        for candidate in candidates:gmatch("[^\n]+") do
+        	if fzy.has_match(prompt_words[1], candidate) then
+        		filtered[#filtered + 1] = candidate
+                score_cache[candidate] = fzy.score(prompt_words[1], candidate)
     		end
+		end
 
-            -- Add plugin path to the list of path to be searched by `require`
-            package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
-            local fzy = require "fzy"
+		-- Filter again, now using the other words
+		for i = 2, #prompt_words do
+		    local refined = {}
 
-            local filtered = {}
-            local score_cache = {}
+		    for _, candidate in ipairs(filtered) do
+            	if fzy.has_match(prompt_words[i], candidate) then
+            	    refined[#refined + 1] = candidate
+                    score_cache[candidate] = score_cache[candidate] + fzy.score(prompt_words[i], candidate)
+            	end
+            end
 
-            -- Treat each word in prompt as a new, refined, search
-            local prompt_words = {}
+            filtered = refined
+        end
+
+		table.sort(filtered, function(a, b)
+            return score_cache[a] > score_cache[b]
+		end)
+
+        local contents = table.concat(filtered, "\n")
+		kak.execute_keys(string.format("%%c%s<esc>", contents))
+		kak.peneira_highlight_matches(prompt, contents)
+	}
+}
+
+# arg1: prompt text
+# arg2: candidates
+define-command -hidden peneira-highlight-matches -params 2 %{
+	lua %opt{peneira_path} %val{timestamp} %arg{@} %{
+		local peneira_path, timestamp, prompt, lines = args()
+
+		if #prompt == 0 then
+		    return
+	    end
+
+        -- Add plugin path to the list of path to be searched by `require`
+        package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
+        local fzy = require "fzy"
+
+		local descriptors = {}
+		local line_number = 0
+
+		for line in lines:gmatch("[^\n]+") do
+		    line_number = line_number + 1
+
+		    if line_number > 50 then
+		        break
+		    end
 
             for word in prompt:gmatch("%S+") do
-                prompt_words[#prompt_words + 1] = word
+                local positions = fzy.positions(word, line)
+
+    		    for _, position in pairs(positions) do
+    		        descriptors[#descriptors + 1] = string.format("%d.%d,%d.%d|@PeneiraMatches", line_number, position, line_number, position)
+    		    end
             end
+        end
 
-            for candidate in candidates:gmatch("[^\n]*") do
-            	if fzy.has_match(prompt_words[1], candidate) then
-            		filtered[#filtered + 1] = candidate
-                    score_cache[candidate] = fzy.score(prompt_words[1], candidate)
-        		end
-    		end
-
-    		-- Filter again, now using the other words
-    		for i = 2,#prompt_words do
-    		    local refined = {}
-
-    		    for _, candidate in ipairs(filtered) do
-                	if fzy.has_match(prompt_words[i], candidate) then
-                	    refined[#refined + 1] = candidate
-                        score_cache[candidate] = score_cache[candidate] + fzy.score(prompt_words[i], candidate)
-                	end
-                end
-
-                filtered = refined
-            end
-
-    		table.sort(filtered, function(a, b)
-                return score_cache[a] > score_cache[b]
-    		end)
-
-    		local keys = string.format("%%c%s<esc>", table.concat(filtered, "\n"))
-    		kak.execute_keys(keys)
-		}
-    }
+        kak.set_option("buffer", "peneira_matches", timestamp, unpack(descriptors))
+	}
 }
 
 # Calls the command stored in the c register. This way, that command can use the
