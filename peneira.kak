@@ -34,7 +34,9 @@ define-command -hidden peneira-configure-buffer %{
 	add-highlighter window/current-line line %opt{peneira_selected_line} PeneiraSelected
 	face window PrimaryCursor @PeneiraSelected
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
+	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
+	map buffer prompt <s-tab> "<a-;>: peneira-select-previous-line<ret>"
 }
 
 define-command -hidden peneira-select-previous-line %{
