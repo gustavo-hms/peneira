@@ -3,25 +3,25 @@ declare-option -hidden str peneira_selected_line 1
 
 set-face global PeneiraSelected @MenuForeground
 
-define-command peneira-filter -params 2 -docstring %{
-    peneira-filter <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
+define-command peneira-filter -params 3 -docstring %{
+    peneira-filter <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
     edit -scratch *peneira*
     peneira-configure-buffer
 
-    execute-keys "%%c%arg{1}<esc>gg"
+    execute-keys "%%c%arg{2}<esc>gg"
 
     prompt -on-change %{
-        peneira-replace-buffer "%val{text}" "%arg{1}"
+        peneira-replace-buffer "%val{text}" "%arg{2}"
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
     } -on-abort %{
         delete-buffer *peneira*
 
-    } 'filter: ' %{
+    } %arg{1} %{
         evaluate-commands -save-regs ac %{
             execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
-            set-register c "%arg{2}"
+            set-register c "%arg{3}"
             peneira-call "%reg{a}"
         }
 
@@ -123,7 +123,7 @@ define-command -hidden peneira-call -params 1 %{
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira-filter %sh{ fd } %{
+    peneira-filter 'files: ' %sh{ fd } %{
         edit %arg{1}
     }
 }
