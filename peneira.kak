@@ -8,7 +8,7 @@ define-command peneira-filter -params 2 -docstring %{
     edit -scratch *peneira*
     peneira-configure-buffer
 
-    execute-keys "%%c%arg{1}<esc>"
+    execute-keys "%%c%arg{1}<esc>gg"
 
     prompt -on-change %{
         peneira-replace-buffer "%val{text}" "%arg{1}"
