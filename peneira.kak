@@ -40,9 +40,9 @@ define-command -hidden peneira-configure-buffer %{
 }
 
 define-command -hidden peneira-select-previous-line %{
-    lua %opt{peneira_selected_line} %{
-        local selected = args()
-        selected = selected > 1 and selected - 1 or selected
+    lua %opt{peneira_selected_line} %val{buf_line_count} %{
+        local selected, line_count = args()
+        selected = selected > 1 and selected - 1 or line_count
         kak.set_option("buffer", "peneira_selected_line", selected)
     	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
     }
@@ -51,7 +51,7 @@ define-command -hidden peneira-select-previous-line %{
 define-command -hidden peneira-select-next-line %{
     lua %opt{peneira_selected_line} %val{buf_line_count} %{
         local selected, line_count = args()
-        selected = selected < line_count and selected + 1 or selected
+        selected = selected % line_count + 1
         kak.set_option("buffer", "peneira_selected_line", selected)
     	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
     }
