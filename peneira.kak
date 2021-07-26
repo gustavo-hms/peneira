@@ -18,7 +18,7 @@ define-command peneira-filter -params 2 -docstring %{
     } -on-abort %{
         delete-buffer *peneira*
 
-    } 'Filter: ' %{
+    } 'filter: ' %{
         evaluate-commands -save-regs ac %{
             execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
             set-register c "%arg{2}"
@@ -67,18 +67,40 @@ define-command -hidden peneira-replace-buffer -params 2 %{
         		return
     		end
 
+            -- Add plugin path to the list of path to be searched by `require`
             package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
             local fzy = require "fzy"
 
             local filtered = {}
             local score_cache = {}
 
+            -- Treat each word in prompt as a new, refined, search
+            local prompt_words = {}
+
+            for word in prompt:gmatch("%S+") do
+                prompt_words[#prompt_words + 1] = word
+            end
+
             for candidate in candidates:gmatch("[^\n]*") do
-            	if fzy.has_match(prompt, candidate) then
+            	if fzy.has_match(prompt_words[1], candidate) then
             		filtered[#filtered + 1] = candidate
-                    score_cache[candidate] = fzy.score(prompt, candidate)
+                    score_cache[candidate] = fzy.score(prompt_words[1], candidate)
         		end
     		end
+
+    		-- Filter again, now using the other words
+    		for i = 2,#prompt_words do
+    		    local refined = {}
+
+    		    for _, candidate in ipairs(filtered) do
+                	if fzy.has_match(prompt_words[i], candidate) then
+                	    refined[#refined + 1] = candidate
+                        score_cache[candidate] = score_cache[candidate] + fzy.score(prompt_words[i], candidate)
+                	end
+                end
+
+                filtered = refined
+            end
 
     		table.sort(filtered, function(a, b)
                 return score_cache[a] > score_cache[b]
