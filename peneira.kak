@@ -1,6 +1,8 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 declare-option -hidden int peneira_selected_line 1
 declare-option -hidden range-specs peneira_matches
+declare-option -hidden str peneira_previous_prompt
+declare-option -hidden str peneira_temp_file
 
 set-face global PeneiraSelected default,rgba:44444422
 set-face global PeneiraMatches value
@@ -10,16 +12,20 @@ define-command peneira-filter -params 3 -docstring %{
 } %{
     edit -scratch *peneira*
     peneira-configure-buffer
-    execute-keys "%%c%arg{2}<esc>gg"
+    set-option buffer peneira_temp_file %sh{ mktemp }
+    execute-keys "%%c%arg{2}<esc>gg: write %opt{peneira_temp_file}<ret>"
 
     prompt -on-change %{
         evaluate-commands -buffer *peneira* %{
-            peneira-replace-buffer "%val{text}" "%arg{2}"
+            execute-keys ": write %opt{peneira_temp_file}<ret>"
+            peneira-replace-buffer "%val{text}"
         }
 
+        set-option buffer peneira_previous_prompt "%val{text}"
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
     } -on-abort %{
+        nop %sh{ rm $kak_opt_peneira_temp_file }
         delete-buffer *peneira*
 
     } %arg{1} %{
@@ -27,6 +33,10 @@ define-command peneira-filter -params 3 -docstring %{
             execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
             set-register c "%arg{3}"
             peneira-call "%reg{a}"
+        }
+
+        evaluate-commands -buffer *peneira* %{
+            nop %sh{ rm $kak_opt_peneira_temp_file }
         }
 
         delete-buffer *peneira*
@@ -62,16 +72,19 @@ define-command -hidden peneira-select-next-line %{
     }
 }
 
-# arg1: prompt text
-# arg2: candidates
-define-command -hidden peneira-replace-buffer -params 2 %{
-    lua %opt{peneira_path} %arg{@} %{
-        local peneira_path, prompt, candidates = args()
+# arg: prompt text
+define-command -hidden peneira-replace-buffer -params 1 %{
+    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
+        local peneira_path, filename, previous_prompt, prompt = args()
+
+        if #prompt < #previous_prompt then
+            kak.execute_keys("u")
+            return
+        end
 
         if #prompt == 0 then
-    		kak.execute_keys(string.format("%%c%s<esc>", candidates))
-    		return
-		end
+            return
+        end
 
         -- Add plugin path to the list of path to be searched by `require`
         package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
@@ -87,7 +100,14 @@ define-command -hidden peneira-replace-buffer -params 2 %{
             prompt_words[#prompt_words + 1] = word
         end
 
-        for candidate in candidates:gmatch("[^\n]+") do
+        local file = io.open(filename, 'r')
+
+        if not file then
+            kak.echo("-debug", "peneira: couldn't open temporary file " .. filename)
+            return
+        end
+
+        for candidate in file:lines() do
         	if fzy.has_match(prompt_words[1], candidate) then
         		filtered[#filtered + 1] = candidate
                 scores[candidate] = fzy.score(prompt_words[1], candidate)
