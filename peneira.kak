@@ -1,5 +1,5 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
-declare-option -hidden str peneira_selected_line 1
+declare-option -hidden int peneira_selected_line 1
 declare-option -hidden range-specs peneira_matches
 
 set-face global PeneiraSelected default,rgba:44444422
