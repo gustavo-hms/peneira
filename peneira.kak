@@ -37,9 +37,12 @@ define-command peneira-filter -params 3 -docstring %{
 
     } -on-abort %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
+        execute-keys ga
         delete-buffer *peneira*
 
     } %arg{1} %{
+        execute-keys ga
+
         evaluate-commands -save-regs ac %{
             # Copy selected line to register a
             execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
