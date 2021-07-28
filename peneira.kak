@@ -36,12 +36,18 @@ define-command peneira -params 3 -docstring %{
         # Place cursor on the selected line
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
+		# It may happen that, filtering out some candidates, the line marked as
+		# selected overflows the buffer.
+		peneira-check-selected-line-overflow
+
     } -on-abort %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
+        # Go back to the previous buffer
         execute-keys ga
         delete-buffer *peneira*
 
     } %arg{1} %{
+        # Go back to the previous buffer
         execute-keys ga
 
         evaluate-commands -save-regs ac %{
@@ -69,6 +75,7 @@ define-command -hidden peneira-fill-buffer %{
     peneira-flag-current-line
 }
 
+# Configure highlighters and mappings
 define-command -hidden peneira-configure-buffer %{
 	remove-highlighter window/number-lines
     add-highlighter window/peneira-matches ranges peneira_matches
@@ -106,6 +113,19 @@ define-command -hidden peneira-select-next-line %{
     peneira-flag-current-line
 }
 
+define-command -hidden peneira-check-selected-line-overflow %{
+    lua %opt{peneira_selected_line} %val{buf_line_count} %{
+        local selected, line_count = args()
+
+        if selected > line_count then
+            kak.set_option("buffer", "peneira_selected_line", line_count)
+        	kak.add_highlighter("-override", "window/current-line", "line", line_count, "PeneiraSelected")
+        	kak.peneira_flag_current_line()
+        end
+    }
+}
+
+# The actual filtering happens here.
 # arg: prompt text
 define-command -hidden peneira-filter-buffer -params 1 %{
     lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
