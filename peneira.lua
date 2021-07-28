@@ -1,4 +1,4 @@
-local fzy = require "fzy_lua"
+local fzy = require "fzy"
 
 local function filter(filename, prompt)
     local file = io.open(filename, 'r')
