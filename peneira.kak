@@ -12,13 +12,23 @@ define-command peneira-filter -params 3 -docstring %{
 } %{
     edit -scratch *peneira*
     peneira-configure-buffer
-    set-option buffer peneira_temp_file %sh{ mktemp }
-    execute-keys "%%c%arg{2}<esc>gg: write %opt{peneira_temp_file}<ret>"
+
+    set-option buffer peneira_temp_file %sh{
+        file=$(mktemp)
+        # Execute command that generates candidates and populate temp file
+        $2 > $file
+        # Write temp file name to peneira_temp_file option
+        printf "%s" $file
+    }
+
+    # Populate *peneira* buffer with the contents of the temp file
+    execute-keys "%%| cat %opt{peneira_temp_file}<ret>gg"
 
     prompt -on-change %{
-        evaluate-commands -buffer *peneira* %{
-            execute-keys ": write %opt{peneira_temp_file}<ret>"
-            peneira-replace-buffer "%val{text}"
+        evaluate-commands -buffer *peneira* -save-regs dquote %{
+            peneira-filter-buffer "%val{text}"
+            # After filtering *peneira* buffer's contents, update temp file
+            write %opt{peneira_temp_file}
         }
 
         set-option buffer peneira_previous_prompt "%val{text}"
@@ -73,14 +83,23 @@ define-command -hidden peneira-select-next-line %{
 }
 
 # arg: prompt text
-define-command -hidden peneira-replace-buffer -params 1 %{
-    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
-        local peneira_path, filename, previous_prompt, prompt = args()
+define-command -hidden peneira-filter-buffer -params 1 %{
+    lua %opt{peneira_previous_prompt} %arg{1} %{
+        local previous_prompt, prompt = args()
 
         if #prompt < #previous_prompt then
             kak.execute_keys("u")
             return
         end
+
+        kak.peneira_refine_filter(prompt)
+    }
+}
+
+# arg: prompt text
+define-command -hidden peneira-refine-filter -params 1 %{
+    lua %opt{peneira_path} %opt{peneira_temp_file} %arg{1} %{
+        local peneira_path, filename, prompt = args()
 
         if #prompt == 0 then
             return
@@ -88,70 +107,15 @@ define-command -hidden peneira-replace-buffer -params 1 %{
 
         -- Add plugin path to the list of path to be searched by `require`
         package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
-        local fzy = require "fzy"
+        local peneira = require "peneira"
 
-        local filtered = {}
-        local scores = {}
+        local lines, positions = peneira.filter(filename, prompt)
+        if not lines then return end
 
-        -- Treat each word in prompt as a new, refined, search
-        local prompt_words = {}
+        kak.set_register("dquote", table.concat(lines, "\n"))
+		kak.execute_keys("%R")
 
-        for word in prompt:gmatch("%S+") do
-            prompt_words[#prompt_words + 1] = word
-        end
-
-        local file = io.open(filename, 'r')
-
-        if not file then
-            kak.echo("-debug", "peneira: couldn't open temporary file " .. filename)
-            return
-        end
-
-        for candidate in file:lines() do
-        	if fzy.has_match(prompt_words[1], candidate) then
-        		filtered[#filtered + 1] = candidate
-                scores[candidate] = fzy.score(prompt_words[1], candidate)
-    		end
-		end
-
-		-- Filter again, now using the remaining words
-		for i = 2, #prompt_words do
-		    local refined = {}
-
-		    for _, candidate in ipairs(filtered) do
-            	if fzy.has_match(prompt_words[i], candidate) then
-            	    refined[#refined + 1] = candidate
-                    scores[candidate] = scores[candidate] + fzy.score(prompt_words[i], candidate)
-            	end
-            end
-
-            filtered = refined
-        end
-
-        -- Sort filtered candidates based on their scores
-		table.sort(filtered, function(a, b)
-            return scores[a] > scores[b]
-		end)
-
-		kak.execute_keys(string.format("%%c%s<esc>", table.concat(filtered, "\n")))
-
-        -- Highlight matches
-		local range_specs = {}
-
-		for i, line in ipairs(filtered) do
-		    if i > 50 then
-		        break
-		    end
-
-            for _, word in ipairs(prompt_words) do
-                local positions = fzy.positions(word, line)
-
-    		    for _, position in pairs(positions) do
-    		        range_specs[#range_specs + 1] = string.format("%d.%d,%d.%d|@PeneiraMatches", i, position, i, position)
-    		    end
-            end
-        end
-
+        local range_specs = peneira.range_specs(positions)
 		kak.peneira_highlight_matches(table.concat(range_specs, "\n"))
 	}
 }
@@ -159,8 +123,8 @@ define-command -hidden peneira-replace-buffer -params 1 %{
 # arg: range specs
 define-command -hidden peneira-highlight-matches -params 1 %{
 	lua %val{timestamp} %arg{1} %{
-		local timestamp, range_specs_text = args()
-		local range_specs = {}
+        local timestamp, range_specs_text = args()
+        local range_specs = {}
 
         for spec in range_specs_text:gmatch("[^\n]+") do
             range_specs[#range_specs + 1] = spec
@@ -179,7 +143,7 @@ define-command -hidden peneira-call -params 1 %{
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira-filter 'files: ' %sh{ fd } %{
+    peneira-filter 'files: ' %{ fd } %{
         edit %arg{1}
     }
 }
