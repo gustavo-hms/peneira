@@ -3,7 +3,6 @@ declare-option -hidden int peneira_selected_line 1 # used to track the selected 
 declare-option -hidden range-specs peneira_matches # used to highlight matches
 declare-option -hidden str peneira_previous_prompt # used to track changes in prompt
 declare-option -hidden str peneira_temp_file # name of the temp file in sync with buffer contents
-declare-option -hidden int-list peneira_timestamps # used to track undo history
 
 set-face global PeneiraSelected default,rgba:44444422
 set-face global PeneiraMatches value
@@ -28,8 +27,6 @@ define-command peneira-filter -params 3 -docstring %{
     prompt -on-change %{
         evaluate-commands -buffer *peneira* -save-regs dquote %{
             peneira-filter-buffer "%val{text}"
-            # After filtering *peneira* buffer, update temp file
-            write %opt{peneira_temp_file}
         }
 
         # Save current prompt contents to be compared against the prompt of the
@@ -90,24 +87,16 @@ define-command -hidden peneira-select-next-line %{
 
 # arg: prompt text
 define-command -hidden peneira-filter-buffer -params 1 %{
-    lua %opt{peneira_previous_prompt} %arg{1} %{
-        local previous_prompt, prompt = args()
+    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
+        local peneira_path, filename, previous_prompt, prompt = args()
 
-        if #prompt < #previous_prompt then
-            kak.execute_keys("u")
+        if prompt == previous_prompt then
             return
         end
 
-        kak.peneira_refine_filter(prompt)
-    }
-}
-
-# arg: prompt text
-define-command -hidden peneira-refine-filter -params 1 %{
-    lua %opt{peneira_path} %opt{peneira_temp_file} %arg{1} %{
-        local peneira_path, filename, prompt = args()
-
         if #prompt == 0 then
+            kak.execute_keys(string.format("%%| cat %s<ret>", filename))
+            kak.set_option("buffer", "peneira_matches")
             return
         end
 
@@ -116,7 +105,11 @@ define-command -hidden peneira-refine-filter -params 1 %{
         local peneira = require "peneira"
 
         local lines, positions = peneira.filter(filename, prompt)
-        if not lines then return end
+
+        if not lines then
+            kak.execute_keys("%d")
+            return
+        end
 
         kak.set_register("dquote", table.concat(lines, "\n"))
 		kak.execute_keys("%R")
@@ -129,7 +122,7 @@ define-command -hidden peneira-refine-filter -params 1 %{
 # arg: range specs
 define-command -hidden peneira-highlight-matches -params 1 %{
 	lua %val{timestamp} %arg{1} %{
-        local timestamp, range_specs_text = args()
+		local timestamp, range_specs_text = args()
         local range_specs = {}
 
         for spec in range_specs_text:gmatch("[^\n]+") do
