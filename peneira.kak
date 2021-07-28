@@ -9,8 +9,8 @@ set-face global PeneiraSelected default,rgba:44444422
 set-face global PeneiraFlag LineNumberCursor
 set-face global PeneiraMatches value
 
-define-command peneira-filter -params 3 -docstring %{
-    peneira-filter <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
+define-command peneira -params 3 -docstring %{
+    peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
     edit -scratch *peneira*
 
@@ -158,7 +158,7 @@ define-command -hidden peneira-call -params 1 %{
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira-filter 'files: ' %{ fd } %{
+    peneira 'files: ' %{ fd } %{
         edit %arg{1}
     }
 }
