@@ -45,7 +45,9 @@ define-command peneira-filter -params 3 -docstring %{
 
         evaluate-commands -save-regs ac %{
             # Copy selected line to register a
-            execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
+            evaluate-commands -buffer *peneira* %{
+                execute-keys %opt{peneira_selected_line}gx_\"ay
+            }
             # Copy <cmd> to register c
             set-register c "%arg{3}"
             peneira-call "%reg{a}"
