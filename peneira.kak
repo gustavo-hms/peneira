@@ -1,8 +1,9 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
-declare-option -hidden int peneira_selected_line 1
-declare-option -hidden range-specs peneira_matches
-declare-option -hidden str peneira_previous_prompt
-declare-option -hidden str peneira_temp_file
+declare-option -hidden int peneira_selected_line 1 # used to track the selected line
+declare-option -hidden range-specs peneira_matches # used to highlight matches
+declare-option -hidden str peneira_previous_prompt # used to track changes in prompt
+declare-option -hidden str peneira_temp_file # name of the temp file in sync with buffer contents
+declare-option -hidden int-list peneira_timestamps # used to track undo history
 
 set-face global PeneiraSelected default,rgba:44444422
 set-face global PeneiraMatches value
@@ -15,7 +16,7 @@ define-command peneira-filter -params 3 -docstring %{
 
     set-option buffer peneira_temp_file %sh{
         file=$(mktemp)
-        # Execute command that generates candidates and populate temp file
+        # Execute command that generates candidates, and populate temp file
         $2 > $file
         # Write temp file name to peneira_temp_file option
         printf "%s" $file
@@ -27,13 +28,14 @@ define-command peneira-filter -params 3 -docstring %{
     prompt -on-change %{
         evaluate-commands -buffer *peneira* -save-regs dquote %{
             peneira-filter-buffer "%val{text}"
-            # After filtering *peneira* buffer's contents, update temp file
+            # After filtering *peneira* buffer, update temp file
             write %opt{peneira_temp_file}
         }
 
         # Save current prompt contents to be compared against the prompt of the
         # next iteration
         set-option buffer peneira_previous_prompt "%val{text}"
+        # Place cursor on the selected line
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
     } -on-abort %{
@@ -138,11 +140,13 @@ define-command -hidden peneira-highlight-matches -params 1 %{
 	}
 }
 
-# Calls the command stored in the c register. This way, that command can use the
-# argument passed to peneira-call as if it was an argument passed to it.
+# Call the command stored in the c register. This way, that command can use the
+# %arg{1} expansion
 define-command -hidden peneira-call -params 1 %{
     evaluate-commands "%reg{c}"
 }
+
+## Some ready to be used filters
 
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
