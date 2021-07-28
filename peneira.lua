@@ -4,8 +4,7 @@ local function filter(filename, prompt)
     local file = io.open(filename, 'r')
 
     if not file then
-        kak.echo("-debug", "peneira: couldn't open temporary file " .. filename)
-        return nil
+        kak.fail("couldn't open temporary file " .. filename)
     end
 
     -- Treat each word in prompt as a new, refined, search
