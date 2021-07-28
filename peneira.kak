@@ -31,6 +31,8 @@ define-command peneira-filter -params 3 -docstring %{
             write %opt{peneira_temp_file}
         }
 
+        # Save current prompt contents to be compared against the prompt of the
+        # next iteration
         set-option buffer peneira_previous_prompt "%val{text}"
         execute-keys "<a-;>%opt{peneira_selected_line}g"
 
@@ -40,7 +42,9 @@ define-command peneira-filter -params 3 -docstring %{
 
     } %arg{1} %{
         evaluate-commands -save-regs ac %{
+            # Copy selected line to register a
             execute-keys -buffer *peneira* %opt{peneira_selected_line}gx_\"ay
+            # Copy <cmd> to register c
             set-register c "%arg{3}"
             peneira-call "%reg{a}"
         }
