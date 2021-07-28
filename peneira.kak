@@ -1,17 +1,18 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 declare-option -hidden int peneira_selected_line 1 # used to track the selected line
+declare-option -hidden line-specs peneira_flag # used to flag selected line
 declare-option -hidden range-specs peneira_matches # used to highlight matches
 declare-option -hidden str peneira_previous_prompt # used to track changes in prompt
 declare-option -hidden str peneira_temp_file # name of the temp file in sync with buffer contents
 
 set-face global PeneiraSelected default,rgba:44444422
+set-face global PeneiraFlag LineNumberCursor
 set-face global PeneiraMatches value
 
 define-command peneira-filter -params 3 -docstring %{
     peneira-filter <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
     edit -scratch *peneira*
-    peneira-configure-buffer
 
     set-option buffer peneira_temp_file %sh{
         file=$(mktemp)
@@ -23,6 +24,7 @@ define-command peneira-filter -params 3 -docstring %{
 
     # Populate *peneira* buffer with the contents of the temp file
     execute-keys "%%| cat %opt{peneira_temp_file}<ret>gg"
+    peneira-configure-buffer
 
     prompt -on-change %{
         evaluate-commands -buffer *peneira* -save-regs dquote %{
@@ -63,8 +65,12 @@ define-command peneira-filter -params 3 -docstring %{
 
 define-command -hidden peneira-configure-buffer %{
 	remove-highlighter window/number-lines
-	add-highlighter window/current-line line %opt{peneira_selected_line} PeneiraSelected
     add-highlighter window/peneira-matches ranges peneira_matches
+
+    add-highlighter window/peneira-flag flag-lines @PeneiraFlag peneira_flag
+    set-option buffer peneira_flag %val{timestamp} "%opt{peneira_selected_line}| ❯ "
+
+	add-highlighter window/current-line line %opt{peneira_selected_line} PeneiraSelected
 	face window PrimaryCursor @PeneiraSelected
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
@@ -73,19 +79,21 @@ define-command -hidden peneira-configure-buffer %{
 }
 
 define-command -hidden peneira-select-previous-line %{
-    lua %opt{peneira_selected_line} %val{buf_line_count} %{
-        local selected, line_count = args()
+    lua %opt{peneira_selected_line} %val{buf_line_count} %val{timestamp} %{
+        local selected, line_count, timestamp = args()
         selected = selected > 1 and selected - 1 or line_count
+        kak.set_option("buffer", "peneira_flag", timestamp, selected .. "| ❯ " )
         kak.set_option("buffer", "peneira_selected_line", selected)
     	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
     }
 }
 
 define-command -hidden peneira-select-next-line %{
-    lua %opt{peneira_selected_line} %val{buf_line_count} %{
-        local selected, line_count = args()
+    lua %opt{peneira_selected_line} %val{buf_line_count} %val{timestamp} %{
+        local selected, line_count, timestamp = args()
         selected = selected % line_count + 1
         kak.set_option("buffer", "peneira_selected_line", selected)
+        kak.set_option("buffer", "peneira_flag", timestamp, selected .. "| ❯ " )
     	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
     }
 }
@@ -126,8 +134,8 @@ define-command -hidden peneira-filter-buffer -params 1 %{
 
 # arg: range specs
 define-command -hidden peneira-highlight-matches -params 1 %{
-	lua %val{timestamp} %arg{1} %{
-		local timestamp, range_specs_text = args()
+	lua %val{timestamp} %opt{peneira_selected_line} %arg{1} %{
+		local timestamp, line, range_specs_text = args()
         local range_specs = {}
 
         for spec in range_specs_text:gmatch("[^\n]+") do
@@ -135,6 +143,7 @@ define-command -hidden peneira-highlight-matches -params 1 %{
         end
 
         kak.set_option("buffer", "peneira_matches", timestamp, unpack(range_specs))
+        kak.set_option("buffer", "peneira_flag", timestamp, line .. "| ❯ " )
 	}
 }
 
