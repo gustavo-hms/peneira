@@ -26,9 +26,7 @@ define-command peneira -params 3 -docstring %{
     peneira-configure-buffer
 
     prompt -on-change %{
-        evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs dquote %{
-            peneira-filter-buffer "%val{text}"
-        }
+        peneira-filter-buffer "%val{text}"
 
         # Save current prompt contents to be compared against the prompt of the
         # next iteration
@@ -46,6 +44,8 @@ define-command peneira -params 3 -docstring %{
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
     } %arg{1} %{
+        nop %sh{ rm $kak_opt_peneira_temp_file }
+
         # Go back to the previous buffer
         execute-keys ga
 
@@ -54,13 +54,10 @@ define-command peneira -params 3 -docstring %{
             evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" %{
                 execute-keys %opt{peneira_selected_line}gx_\"ay
             }
+
             # Copy <cmd> to register c
             set-register c "%arg{3}"
             peneira-call "%reg{a}"
-        }
-
-        evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" %{
-            nop %sh{ rm $kak_opt_peneira_temp_file }
         }
 
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
@@ -123,35 +120,37 @@ define-command -hidden peneira-avoid-buffer-overflow %{
 # The actual filtering happens here.
 # arg: prompt text
 define-command -hidden peneira-filter-buffer -params 1 %{
-    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
-        local peneira_path, filename, previous_prompt, prompt = args()
+    evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs dquote %{
+        lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
+            local peneira_path, filename, previous_prompt, prompt = args()
 
-        if prompt == previous_prompt then
-            return
-        end
+            if prompt == previous_prompt then
+                return
+            end
 
-        if #prompt == 0 then
-            kak.peneira_fill_buffer()
-            return
-        end
+            if #prompt == 0 then
+                kak.peneira_fill_buffer()
+                return
+            end
 
-        -- Add plugin path to the list of path to be searched by `require`
-        package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
-        local peneira = require "peneira"
+            -- Add plugin path to the list of path to be searched by `require`
+            package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
+            local peneira = require "peneira"
 
-        local lines, positions = peneira.filter(filename, prompt)
+            local lines, positions = peneira.filter(filename, prompt)
 
-        if not lines then
-            kak.execute_keys("%d")
-            return
-        end
+            if not lines then
+                kak.execute_keys("%d")
+                return
+            end
 
-        kak.set_register("dquote", table.concat(lines, "\n"))
-		kak.execute_keys("%R")
+            kak.set_register("dquote", table.concat(lines, "\n"))
+    		kak.execute_keys("%R")
 
-        local range_specs = peneira.range_specs(positions)
-		kak.peneira_highlight_matches(table.concat(range_specs, "\n"))
-	}
+            local range_specs = peneira.range_specs(positions)
+    		kak.peneira_highlight_matches(table.concat(range_specs, "\n"))
+    	}
+    }
 }
 
 # arg: range specs
