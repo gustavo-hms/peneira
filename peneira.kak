@@ -12,7 +12,7 @@ set-face global PeneiraMatches value
 define-command peneira -params 3 -docstring %{
     peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
-    edit -scratch *peneira*
+    edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
     set-option buffer peneira_temp_file %sh{
         file=$(mktemp)
@@ -26,7 +26,7 @@ define-command peneira -params 3 -docstring %{
     peneira-configure-buffer
 
     prompt -on-change %{
-        evaluate-commands -buffer *peneira* -save-regs dquote %{
+        evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs dquote %{
             peneira-filter-buffer "%val{text}"
         }
 
@@ -43,7 +43,7 @@ define-command peneira -params 3 -docstring %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
         # Go back to the previous buffer
         execute-keys ga
-        delete-buffer *peneira*
+        delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
     } %arg{1} %{
         # Go back to the previous buffer
@@ -51,7 +51,7 @@ define-command peneira -params 3 -docstring %{
 
         evaluate-commands -save-regs ac %{
             # Copy selected line to register a
-            evaluate-commands -buffer *peneira* %{
+            evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" %{
                 execute-keys %opt{peneira_selected_line}gx_\"ay
             }
             # Copy <cmd> to register c
@@ -59,11 +59,11 @@ define-command peneira -params 3 -docstring %{
             peneira-call "%reg{a}"
         }
 
-        evaluate-commands -buffer *peneira* %{
+        evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" %{
             nop %sh{ rm $kak_opt_peneira_temp_file }
         }
 
-        delete-buffer *peneira*
+        delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
     }
 }
 
