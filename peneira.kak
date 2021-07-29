@@ -173,10 +173,12 @@ define-command -hidden peneira-call -params 1 %{
 
 ## Some ready to be used filters
 
+declare-option str peneira_files_command "fd --type file"
+
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira 'files: ' %{ fd --type file } %{
+    peneira 'files: ' %opt{peneira_files_command} %{
         edit %arg{1}
     }
 }
