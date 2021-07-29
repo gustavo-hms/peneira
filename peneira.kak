@@ -33,12 +33,11 @@ define-command peneira -params 3 -docstring %{
         # Save current prompt contents to be compared against the prompt of the
         # next iteration
         set-option buffer peneira_previous_prompt "%val{text}"
-        # Place cursor on the selected line
-        execute-keys "<a-;>%opt{peneira_selected_line}g"
+        peneira-select-line %opt{peneira_selected_line}
 
 		# It may happen that, filtering out some candidates, the line marked as
 		# selected overflows the buffer.
-		peneira-check-selected-line-overflow
+		peneira-avoid-buffer-overflow
 
     } -on-abort %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
@@ -70,57 +69,53 @@ define-command peneira -params 3 -docstring %{
 
 define-command -hidden peneira-fill-buffer %{
     # Populate *peneira* buffer with the contents of the temp file
-    execute-keys "%%| cat %opt{peneira_temp_file}<ret>gg"
+    execute-keys "%%| cat %opt{peneira_temp_file}<ret>"
+    peneira-select-line %opt{peneira_selected_line}
     set-option buffer peneira_matches
-    peneira-flag-current-line
 }
 
 # Configure highlighters and mappings
 define-command -hidden peneira-configure-buffer %{
 	remove-highlighter window/number-lines
-    add-highlighter window/peneira-matches ranges peneira_matches
-
-    add-highlighter window/peneira-flag flag-lines @PeneiraFlag peneira_flag
-    peneira-flag-current-line
-
-	add-highlighter window/current-line line %opt{peneira_selected_line} PeneiraSelected
+    add-highlighter buffer/peneira-matches ranges peneira_matches
+    add-highlighter buffer/peneira-flag flag-lines @PeneiraFlag peneira_flag
 	face window PrimaryCursor @PeneiraSelected
+
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
 	map buffer prompt <s-tab> "<a-;>: peneira-select-previous-line<ret>"
 }
 
+define-command -hidden peneira-select-line -params 1 %{
+    execute-keys "<a-;>%arg{1}g"
+    set-option buffer peneira_flag %val{timestamp} "%arg{1}| ❯ "
+    set-option buffer peneira_selected_line %arg{1}
+	add-highlighter -override buffer/current-line line %arg{1} PeneiraSelected
+}
+
 define-command -hidden peneira-select-previous-line %{
     lua %opt{peneira_selected_line} %val{buf_line_count} %{
         local selected, line_count = args()
         selected = selected > 1 and selected - 1 or line_count
-        kak.set_option("buffer", "peneira_selected_line", selected)
-    	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
+        kak.peneira_select_line(selected)
     }
-
-    peneira-flag-current-line
 }
 
 define-command -hidden peneira-select-next-line %{
     lua %opt{peneira_selected_line} %val{buf_line_count} %{
         local selected, line_count = args()
         selected = selected % line_count + 1
-        kak.set_option("buffer", "peneira_selected_line", selected)
-    	kak.add_highlighter("-override", "window/current-line", "line", selected, "PeneiraSelected")
+        kak.peneira_select_line(selected)
     }
-
-    peneira-flag-current-line
 }
 
-define-command -hidden peneira-check-selected-line-overflow %{
+define-command -hidden peneira-avoid-buffer-overflow %{
     lua %opt{peneira_selected_line} %val{buf_line_count} %{
         local selected, line_count = args()
 
         if selected > line_count then
-            kak.set_option("buffer", "peneira_selected_line", line_count)
-        	kak.add_highlighter("-override", "window/current-line", "line", line_count, "PeneiraSelected")
-        	kak.peneira_flag_current_line()
+            kak.peneira_select_line(line_count)
         end
     }
 }
