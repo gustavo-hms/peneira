@@ -166,15 +166,7 @@ define-command -hidden peneira-highlight-matches -params 1 %{
 
         local unpack = unpack or table.unpack -- make it compatible both with lua and luajit
         kak.set_option("buffer", "peneira_matches", timestamp, unpack(range_specs))
-        kak.peneira_flag_current_line()
 	}
-}
-
-define-command -hidden peneira-flag-current-line %{
-    lua %val{timestamp} %opt{peneira_selected_line} %{
-        local timestamp, line = args()
-        kak.set_option("buffer", "peneira_flag", timestamp, line .. "| ❯ " )
-    }
 }
 
 # Call the command stored in the c register. This way, that command can use the
