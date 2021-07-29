@@ -150,23 +150,18 @@ define-command -hidden peneira-filter-buffer -params 1 %{
     		kak.execute_keys("%R")
 
             local range_specs = peneira.range_specs(positions)
-    		kak.peneira_highlight_matches(table.concat(range_specs, "\n"))
+            unpack = unpack or table.unpack -- make it compatible with both lua and luajit
+    		kak.peneira_highlight_matches(unpack(range_specs))
     	}
     }
 }
 
 # arg: range specs
-define-command -hidden peneira-highlight-matches -params 1 %{
-	lua %val{timestamp} %arg{1} %{
-		local timestamp, range_specs_text = args()
-        local range_specs = {}
-
-        for spec in range_specs_text:gmatch("[^\n]+") do
-            range_specs[#range_specs + 1] = spec
-        end
-
-        local unpack = unpack or table.unpack -- make it compatible both with lua and luajit
-        kak.set_option("buffer", "peneira_matches", timestamp, unpack(range_specs))
+define-command -hidden peneira-highlight-matches -params 1.. %{
+	lua %arg{@} %val{timestamp} %{
+		local timestamp = table.remove(arg)
+        unpack = unpack or table.unpack
+        kak.set_option("buffer", "peneira_matches", timestamp, unpack(arg))
 	}
 }
 
