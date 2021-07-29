@@ -169,6 +169,7 @@ define-command -hidden peneira-highlight-matches -params 1 %{
             range_specs[#range_specs + 1] = spec
         end
 
+        local unpack = unpack or table.unpack -- make it compatible both with lua and luajit
         kak.set_option("buffer", "peneira_matches", timestamp, unpack(range_specs))
         kak.peneira_flag_current_line()
 	}
