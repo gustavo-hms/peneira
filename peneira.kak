@@ -80,8 +80,10 @@ define-command -hidden peneira-configure-buffer %{
 
 	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
+	map buffer prompt <c-n> "<a-;>: peneira-select-next-line<ret>"
 	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
 	map buffer prompt <s-tab> "<a-;>: peneira-select-previous-line<ret>"
+	map buffer prompt <c-p> "<a-;>: peneira-select-previous-line<ret>"
 }
 
 define-command -hidden peneira-select-line -params 1 %{
