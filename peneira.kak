@@ -17,7 +17,7 @@ define-command peneira -params 3 -docstring %{
     set-option buffer peneira_temp_file %sh{
         file=$(mktemp)
         # Execute command that generates candidates, and populate temp file
-        $2 > $file
+        eval "$2" > $file
         # Write temp file name to peneira_temp_file option
         printf "%s" $file
     }
@@ -178,7 +178,9 @@ declare-option str peneira_files_command "fd --type file"
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree
 } %{
-    peneira 'files: ' %opt{peneira_files_command} %{
-        edit %arg{1}
+    lua %val{buflist} %opt{peneira_files_command} %{
+        local command = table.remove(arg)
+        command = string.format("%s | grep -Fxv '%s'", command, table.concat(arg, "\n"))
+        kak.peneira("files: ", command, "edit %arg{1}")
     }
 }
