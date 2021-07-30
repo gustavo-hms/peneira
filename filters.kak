@@ -42,3 +42,34 @@ define-command peneira-local-files -docstring %{
         ]])
     }
 }
+
+define-command peneira-tags -docstring %{
+    peneira-tags: select a symbol definition for the current buffer
+} %{
+    peneira 'tags: ' "ctags -f - %val{buffile} | sed -r 's/^([^\t]+).+/\1/g'" %{
+        lua %val{bufname} %arg{1} %{
+            local buffer, tag = args()
+            local pattern = "^" .. tag .. "\t.+/^([^/]+)$/"
+
+            local ctags = io.popen("ctags --pattern-length-limit=0 -f - " .. buffer)
+
+            for line in ctags:lines() do
+                -- Extract everything between /^ and $/
+                local match = line:match(pattern)
+
+                if match then
+                    -- Interpret the matched string literally
+                    local search = [[\Q]] .. match .. [[\E]]
+
+                    -- Kakoune interprets everything between angle brackets as
+                    -- a key (like <ret> and <esc>), so searching for thing like
+                    -- Vec<i64> won't work. Thus, we need to cheat a little.
+                    search = search:gsub("<", [[\E.\Q]])
+                    kak.execute_keys("/" .. search .. "<ret>")
+                    kak.execute_keys("s" .. tag .. "<ret>vv")
+                    return
+                end
+            end
+        }
+    }
+}
