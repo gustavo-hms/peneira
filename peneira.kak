@@ -12,14 +12,23 @@ set-face global PeneiraMatches value
 define-command peneira -params 3 -docstring %{
     peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
 } %{
-    edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+    evaluate-commands -save-regs dquote %{
+        lua %arg{2} %{
+            -- We need a raw call to the %sh{} expansion here for getting
+            -- shell expansions in the user provided command.
+            print(string.format([[
+                set-register dquote %%sh{
+                    # Execute command that generates candidates, and populate temp file
+                    file=$(mktemp)
+                    %s > $file
+                    # Write temp file name to peneira_temp_file option
+                    printf "%%s" $file
+                }
+            ]], arg[1]))
+        }
 
-    set-option buffer peneira_temp_file %sh{
-        file=$(mktemp)
-        # Execute command that generates candidates, and populate temp file
-        eval "$2" > $file
-        # Write temp file name to peneira_temp_file option
-        printf "%s" $file
+        edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+        set-option buffer peneira_temp_file %reg{dquote}
     }
 
     peneira-fill-buffer

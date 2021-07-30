@@ -46,7 +46,7 @@ define-command peneira-local-files -docstring %{
 define-command peneira-tags -docstring %{
     peneira-tags: select a symbol definition for the current buffer
 } %{
-    peneira 'tags: ' "ctags -f - %val{buffile} | sed -r 's/^([^\t]+).+/\1/g'" %{
+    peneira 'tags: ' %{ ctags -f - $kak_buffile | sed -r 's/^([^\t]+).+/\1/g' } %{
         lua %val{bufname} %arg{1} %{
             local buffer, tag = args()
             local pattern = "^" .. tag .. "\t.+/^([^/]+)$/"
