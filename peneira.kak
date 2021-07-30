@@ -136,7 +136,7 @@ define-command -hidden peneira-filter-buffer -params 1 %{
             end
 
             -- Add plugin path to the list of path to be searched by `require`
-            package.path = string.format("%s/?.lua;%s", peneira_path, package.path)
+            addpackagepath(peneira_path)
             local peneira = require "peneira"
 
             local lines, positions = peneira.filter(filename, prompt)
@@ -169,49 +169,4 @@ define-command -hidden peneira-highlight-matches -params 1.. %{
 # %arg{1} expansion
 define-command -hidden peneira-call -params 1 %{
     evaluate-commands "%reg{c}"
-}
-
-## Some ready to be used filters
-
-declare-option str peneira_files_command "fd --type file"
-
-define-command peneira-files -docstring %{
-    peneira-files: select a file in the current directory tree
-} %{
-    lua %val{buflist} %opt{peneira_files_command} %{
-        local command = table.remove(arg)
-        command = string.format("%s | grep -Fxv '%s'", command, table.concat(arg, "\n"))
-        kak.peneira("files: ", command, "edit %arg{1}")
-    }
-}
-
-define-command peneira-local-files -docstring %{
-    peneira-local-files: select a file in the directory tree of the current file
-} %{
-    lua %val{buflist} %val{bufname} %opt{peneira_files_command} %{
-        local command = table.remove(arg)
-        local current_file = table.remove(arg)
-        local local_dir = current_file:gsub("[^/]+$", "")
-
-        for i, buffer in ipairs(arg) do
-            local _, last = buffer:find(local_dir, 1, true)
-
-            if last then
-                arg[i] = buffer:sub(last + 1)
-            end
-        end
-
-        command = string.format([[
-            current=$(pwd)
-            cd $(dirname %s)
-            %s | grep -Fxv '%s'
-            cd $current
-        ]], current_file, command, table.concat(arg, "\n"))
-
-        kak.peneira("files: ", command, [[
-            edit %sh{
-                printf "%s/%s" $(dirname ${kak_bufname}) $1
-            }
-        ]])
-    }
 }
