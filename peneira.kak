@@ -202,10 +202,16 @@ define-command peneira-local-files -docstring %{
         end
 
         command = string.format([[
+            current=$(pwd)
             cd $(dirname %s)
             %s | grep -Fxv '%s'
+            cd $current
         ]], current_file, command, table.concat(arg, "\n"))
 
-        kak.peneira("files: ", command, "edit %arg{1}")
+        kak.peneira("files: ", command, [[
+            edit %sh{
+                printf "%s/%s" $(dirname ${kak_bufname}) $1
+            }
+        ]])
     }
 }
