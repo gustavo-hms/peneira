@@ -184,3 +184,28 @@ define-command peneira-files -docstring %{
         kak.peneira("files: ", command, "edit %arg{1}")
     }
 }
+
+define-command peneira-local-files -docstring %{
+    peneira-local-files: select a file in the directory tree of the current file
+} %{
+    lua %val{buflist} %val{bufname} %opt{peneira_files_command} %{
+        local command = table.remove(arg)
+        local current_file = table.remove(arg)
+        local local_dir = current_file:gsub("[^/]+$", "")
+
+        for i, buffer in ipairs(arg) do
+            local _, last = buffer:find(local_dir, 1, true)
+
+            if last then
+                arg[i] = buffer:sub(last + 1)
+            end
+        end
+
+        command = string.format([[
+            cd $(dirname %s)
+            %s | grep -Fxv '%s'
+        ]], current_file, command, table.concat(arg, "\n"))
+
+        kak.peneira("files: ", command, "edit %arg{1}")
+    }
+}
