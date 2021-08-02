@@ -10,7 +10,7 @@ set-face global PeneiraFlag LineNumberCursor
 set-face global PeneiraMatches value
 
 define-command peneira -params 3 -docstring %{
-    peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with its first argument set to the selected candidate.
+    peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
 } %{
     edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 

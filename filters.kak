@@ -3,17 +3,18 @@
 declare-option str peneira_files_command "fd --type file"
 
 define-command peneira-files -docstring %{
-    peneira-files: select a file in the current directory tree
+    peneira-files: select a file in the current directory tree, ignoring already opened ones.
 } %{
     lua %val{buflist} %opt{peneira_files_command} %{
         local command = table.remove(arg)
+        -- Do not list already opened files
         command = string.format("%s | grep -Fxv '%s'", command, table.concat(arg, "\n"))
         kak.peneira("files: ", command, "edit %arg{1}")
     }
 }
 
 define-command peneira-local-files -docstring %{
-    peneira-local-files: select a file in the directory tree of the current file
+    peneira-local-files: select a file in the directory tree of the current file, ignoring already opened ones.
 } %{
     lua %val{buflist} %val{bufname} %opt{peneira_files_command} %{
         local command = table.remove(arg)
@@ -31,6 +32,7 @@ define-command peneira-local-files -docstring %{
         command = string.format([[
             current=$(pwd)
             cd $(dirname %s)
+            # Do not list already opened files
             %s | grep -Fxv '%s'
             cd $current
         ]], current_file, command, table.concat(arg, "\n"))
