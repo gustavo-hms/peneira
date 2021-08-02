@@ -12,14 +12,39 @@ set-face global PeneiraMatches value
 define-command peneira -params 3 -docstring %{
     peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
 } %{
-    edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
-    set-option buffer peneira_temp_file %sh{
-        file=$(mktemp)
-        # Execute command that generates candidates, and populate temp file
-        eval "$2" > $file
-        # Write temp file name to peneira_temp_file option
-        printf "%s" $file
+    evaluate-commands -save-regs dquote %{
+        lua %arg{2} %{
+            -- %arg{2} (the command that generates candidates) may contain
+            -- shell expansions. If we use it directly inside %sh{}, Kakoune
+            -- doesn't interprets those expansions. E.g., say %arg{2} contains
+            -- `cat $kak_buffile`. If we do something like
+            --
+            --     set-register dquote %sh{
+            --         ...
+            --         eval "$2" > $file
+            --         ...
+            --     }
+            -- 
+            -- Kakoune will se only that `$2` expansion, but not the
+            -- `$kak_buffile` *inside* `$2` and thus `$kak_buffile` won't
+            -- be set.
+            --
+            -- That's why need to inject the contents of %arg{2} manually
+            -- before executing %sh{}.
+            print(string.format([[
+                set-register dquote %%sh{
+                    # Execute command that generates candidates, and populate temp file
+                    file=$(mktemp)
+                    eval "%s" > $file
+                    # Write file name to " register
+                    printf "%%s" $file
+                }
+            ]], arg[1]))
+        }
+
+        edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+        set-option buffer peneira_temp_file %reg{dquote}
     }
 
     peneira-fill-buffer
@@ -39,14 +64,11 @@ define-command peneira -params 3 -docstring %{
 
     } -on-abort %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
-        # Go back to the previous buffer
         execute-keys ga
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
     } %arg{1} %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
-
-        # Go back to the previous buffer
         execute-keys ga
 
         evaluate-commands -save-regs ac %{
