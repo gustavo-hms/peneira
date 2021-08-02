@@ -31,11 +31,11 @@ define-command peneira-local-files -docstring %{
 
         command = string.format([[
             current=$(pwd)
-            cd $(dirname %s)
+            cd %s
             # Do not list already opened files
             %s | grep -Fxv '%s'
             cd $current
-        ]], current_file, command, table.concat(arg, "\n"))
+        ]], local_dir, command, table.concat(arg, "\n"))
 
         kak.peneira("files: ", command, [[
             edit %sh{
