@@ -21,6 +21,7 @@ define-command peneira-local-files -docstring %{
         local current_file = table.remove(arg)
         local local_dir = current_file:gsub("[^/]+$", "")
 
+        -- Remove dir prefix from buffers names
         for i, buffer in ipairs(arg) do
             local _, last = buffer:find(local_dir, 1, true)
 

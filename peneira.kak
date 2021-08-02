@@ -17,7 +17,7 @@ define-command peneira -params 3 -docstring %{
         lua %arg{2} %{
             -- %arg{2} (the command that generates candidates) may contain
             -- shell expansions. If we use it directly inside %sh{}, Kakoune
-            -- doesn't interprets those expansions. E.g., say %arg{2} contains
+            -- doesn't interpret those expansions. E.g., say %arg{2} contains
             -- `cat $kak_buffile`. If we do something like
             --
             --     set-register dquote %sh{
