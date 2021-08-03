@@ -76,3 +76,14 @@ define-command peneira-tags -docstring %{
         }
     }
 }
+
+define-command peneira-lines -docstring %{
+    peneira-lines: select a line in the current buffer
+} %{
+    evaluate-commands -save-regs dquote %{
+        execute-keys -draft -save-regs '' '%y'
+        peneira 'lines: ' %{ printf "%s\n" $kak_quoted_reg_dquote } %{
+            echo %arg{1}
+        }
+    }
+}
