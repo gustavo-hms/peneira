@@ -80,10 +80,14 @@ define-command peneira-tags -docstring %{
 define-command peneira-lines -docstring %{
     peneira-lines: select a line in the current buffer
 } %{
-    evaluate-commands -save-regs '"f' %{
+    evaluate-commands -save-regs '"fg' %{
+        # Save filetype of current buffer to apply its highlighters to *peneira*
+        # buffer.
         set-register f %opt{filetype}
+        # Save current line to make *peneira* buffer also selects it.
+        set-register g %val{cursor_line}
 
-        hook global -once WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+        hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
             lua %reg{f} %{
                 local type = arg[1] == "kak" and "kakrc" or arg[1]
                 kak.add_highlighter("window/", "ref", type)
@@ -94,6 +98,28 @@ define-command peneira-lines -docstring %{
             # The default face isn't that readable with the filetype highlighter
             # enabled.
             set-face window PeneiraMatches +ub
+
+            # We want that the filter starts with the current line selected.
+            # But, as soon as the user starts typing, the filter needs to select
+            # again the first line and restore the default behaviour. Otherwise,
+            # having the current line always selected would be a bit annoying.
+            #
+            # To detect that the user started typing, we will track changes to
+            # peneira_matches option.
+            peneira-select-line %reg{g}
+            hook -group peneira-lines window WinSetOption peneira_matches=.* %{
+                lua %opt{peneira_matches} %{
+                    if arg[1] > 0 then
+                        -- If the timestamp (that is, the first thing in
+                        -- peneira_matches, hence `arg[1]`) is greater than
+                        -- zero, then the user has just started typing. So,
+                        -- it's time to select the first line again and
+                        -- remove this hook.
+                        kak.remove_hooks("window", "peneira-lines")
+                        kak.peneira_select_line(1)
+                    end
+                }
+            }
         }
 
         execute-keys -draft -save-regs '' '%y'
