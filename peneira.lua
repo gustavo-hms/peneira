@@ -36,7 +36,7 @@ local function accumulate(accumulated, data)
             -- Sum scores
             item[3] = item[3] + accum[3]
         end
-        end
+    end
 
     data.lines = lines
     return data
