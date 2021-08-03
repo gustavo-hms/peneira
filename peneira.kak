@@ -7,7 +7,7 @@ declare-option -hidden str peneira_temp_file # name of the temp file in sync wit
 
 set-face global PeneiraSelected default,rgba:1c1d2122
 set-face global PeneiraFlag LineNumberCursor
-set-face global PeneiraMatches value
+set-face global PeneiraMatches +u@value
 
 define-command peneira -params 3 -docstring %{
     peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
@@ -173,6 +173,8 @@ define-command -hidden peneira-filter-buffer -params 1 %{
     		kak.execute_keys('%"PR')
 
             local range_specs = peneira.range_specs(positions)
+            if #range_specs == 0 then return end
+
             unpack = unpack or table.unpack -- make it compatible with both lua and luajit
     		kak.peneira_highlight_matches(unpack(range_specs))
     	}
