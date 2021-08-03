@@ -80,10 +80,22 @@ define-command peneira-tags -docstring %{
 define-command peneira-lines -docstring %{
     peneira-lines: select a line in the current buffer
 } %{
-    evaluate-commands -save-regs dquote %{
+    evaluate-commands -save-regs '"f' %{
+        set-register f %opt{filetype}
+
+        hook global -once WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+            add-highlighter window/ ref %reg{f}
+            add-highlighter window/ regex ^\s*\d+\s 0:@LineNumbers
+
+            # The default face isn't that readable with the filetype highlighter
+            # enabled.
+            set-face window PeneiraMatches +ub
+        }
+
         execute-keys -draft -save-regs '' '%y'
-        peneira 'lines: ' %{ printf "%s\n" $kak_quoted_reg_dquote } %{
-            echo %arg{1}
+
+        peneira 'lines: ' %{ printf "%s" $kak_quoted_reg_dquote | nl -b 'a' -s ' ' } %{
+            execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
     }
 }
