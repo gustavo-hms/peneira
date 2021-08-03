@@ -13,14 +13,14 @@ define-command peneira -params 3 -docstring %{
     peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
 } %{
 
-    evaluate-commands -save-regs dquote %{
+    evaluate-commands -save-regs P %{
         lua %arg{2} %{
             -- %arg{2} (the command that generates candidates) may contain
             -- shell expansions. If we use it directly inside %sh{}, Kakoune
             -- doesn't interpret those expansions. E.g., say %arg{2} contains
             -- `cat $kak_buffile`. If we do something like
             --
-            --     set-register dquote %sh{
+            --     set-register P %sh{
             --         ...
             --         eval "$2" > $file
             --         ...
@@ -33,18 +33,18 @@ define-command peneira -params 3 -docstring %{
             -- That's why need to inject the contents of %arg{2} manually
             -- before executing %sh{}.
             print(string.format([[
-                set-register dquote %%sh{
+                set-register P %%sh{
                     # Execute command that generates candidates, and populate temp file
                     file=$(mktemp)
                     eval "%s" > $file
-                    # Write file name to " register
+                    # Write file name to register P
                     printf "%%s" $file
                 }
             ]], arg[1]))
         }
 
         edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
-        set-option buffer peneira_temp_file %reg{dquote}
+        set-option buffer peneira_temp_file %reg{P}
     }
 
     peneira-fill-buffer
@@ -77,7 +77,8 @@ define-command peneira -params 3 -docstring %{
                 execute-keys %opt{peneira_selected_line}gx_\"ay
             }
 
-            # Copy <cmd> to register c
+            # Copy <cmd> to register c (peneira-call expects <cmd> to be in
+            # register c)
             set-register c "%arg{3}"
             peneira-call "%reg{a}"
         }
@@ -144,7 +145,7 @@ define-command -hidden peneira-avoid-buffer-overflow %{
 # The actual filtering happens here.
 # arg: prompt text
 define-command -hidden peneira-filter-buffer -params 1 %{
-    evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs dquote %{
+    evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs P %{
         lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
             local peneira_path, filename, previous_prompt, prompt = args()
 
@@ -168,8 +169,8 @@ define-command -hidden peneira-filter-buffer -params 1 %{
                 return
             end
 
-            kak.set_register("dquote", table.concat(lines, "\n"))
-    		kak.execute_keys("%R")
+            kak.set_register("P", table.concat(lines, "\n"))
+    		kak.execute_keys('%"PR')
 
             local range_specs = peneira.range_specs(positions)
             unpack = unpack or table.unpack -- make it compatible with both lua and luajit
