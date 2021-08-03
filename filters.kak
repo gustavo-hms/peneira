@@ -84,7 +84,11 @@ define-command peneira-lines -docstring %{
         set-register f %opt{filetype}
 
         hook global -once WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
-            add-highlighter window/ ref %reg{f}
+            lua %reg{f} %{
+                local type = arg[1] == "kak" and "kakrc" or arg[1]
+                kak.add_highlighter("window/", "ref", type)
+            }
+
             add-highlighter window/ regex ^\s*\d+\s 0:@LineNumbers
 
             # The default face isn't that readable with the filetype highlighter
