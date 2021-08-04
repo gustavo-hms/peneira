@@ -62,7 +62,7 @@ end
 --     { line_number, { match_position... }, score }
 --
 -- Steps 3 and 5 are done by the accumulate function.
-local function filter(filename, prompt)
+local function filter(filename, prompt, rank)
     local file = io.open(filename, 'r')
 
     if not file then
@@ -83,10 +83,12 @@ local function filter(filename, prompt)
         data = accumulate(data, { matches = matches })
     end
 
-    table.sort(data.matches, function(a, b)
-        -- Sort based on the scores. Higher is better.
-        return a[3] > b[3]
-    end)
+    if rank then
+        table.sort(data.matches, function(a, b)
+            -- Sort based on the scores. Higher is better.
+            return a[3] > b[3]
+        end)
+    end
 
     local positions = {}
     local filtered = {}

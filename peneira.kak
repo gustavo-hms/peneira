@@ -9,15 +9,36 @@ set-face global PeneiraSelected default,rgba:1c1d2122
 set-face global PeneiraFlag LineNumberCursor
 set-face global PeneiraMatches +u@value
 
-define-command peneira -params 3 -docstring %{
-    peneira <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
+define-command peneira -params 3..4 -docstring %{
+    peneira [<switches>] <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
+    Switches:
+        -no-rank  do not rank candidates (respect their ordering).
 } %{
+    lua %arg{@} %{
+        local rank = true
 
+        for i, a in ipairs(arg) do
+            if a == "-no-rank" then
+                rank = false
+                table.remove(arg, i)
+            end
+        end
+
+        unpack = unpack or table.unpack -- make it compatible with both lua and luajit
+        kak.peneira_finder(rank, unpack(arg))
+    }
+}
+
+# arg1: whether to rank candidates
+# arg2: text for prompt
+# arg3: command to generate candidates
+# arg4: command to execute after selecting candidate
+define-command -hidden peneira-finder -params 4 %{
     evaluate-commands -save-regs P %{
-        lua %arg{2} %{
-            -- %arg{2} (the command that generates candidates) may contain
+        lua %arg{3} %{
+            -- %arg{3} (the command that generates candidates) may contain
             -- shell expansions. If we use it directly inside %sh{}, Kakoune
-            -- doesn't interpret those expansions. E.g., say %arg{2} contains
+            -- doesn't interpret those expansions. E.g., say %arg{3} contains
             -- `cat $kak_buffile`. If we do something like
             --
             --     set-register P %sh{
@@ -30,7 +51,7 @@ define-command peneira -params 3 -docstring %{
             -- `$kak_buffile` *inside* `$2` and thus `$kak_buffile` won't
             -- be set.
             --
-            -- That's why need to inject the contents of %arg{2} manually
+            -- That's why need to inject the contents of %arg{3} manually
             -- before executing %sh{}.
             print(string.format([[
                 set-register P %%sh{
@@ -51,7 +72,7 @@ define-command peneira -params 3 -docstring %{
     peneira-configure-buffer
 
     prompt -on-change %{
-        peneira-filter-buffer "%val{text}"
+        peneira-filter-buffer %arg{1} "%val{text}"
 
         # Save current prompt contents to be compared against the prompt of the
         # next iteration
@@ -67,7 +88,7 @@ define-command peneira -params 3 -docstring %{
         execute-keys ga
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
 
-    } %arg{1} %{
+    } %arg{2} %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
         execute-keys ga
 
@@ -79,7 +100,7 @@ define-command peneira -params 3 -docstring %{
 
             # Copy <cmd> to register c (peneira-call expects <cmd> to be in
             # register c)
-            set-register c "%arg{3}"
+            set-register c "%arg{4}"
             peneira-call "%reg{a}"
         }
 
@@ -143,11 +164,12 @@ define-command -hidden peneira-avoid-buffer-overflow %{
 }
 
 # The actual filtering happens here.
-# arg: prompt text
-define-command -hidden peneira-filter-buffer -params 1 %{
+# arg1: whether to rank candidates
+# arg2: prompt text
+define-command -hidden peneira-filter-buffer -params 2 %{
     evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs P %{
-        lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{1} %{
-            local peneira_path, filename, previous_prompt, prompt = args()
+    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{@} %{
+            local peneira_path, filename, previous_prompt, rank, prompt = args()
 
             if prompt == previous_prompt then
                 return
@@ -162,7 +184,7 @@ define-command -hidden peneira-filter-buffer -params 1 %{
             addpackagepath(peneira_path)
             local peneira = require "peneira"
 
-            local lines, positions = peneira.filter(filename, prompt)
+            local lines, positions = peneira.filter(filename, prompt, rank)
 
             if not lines then
                 kak.execute_keys("%d")

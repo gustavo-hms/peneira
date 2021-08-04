@@ -124,7 +124,7 @@ define-command peneira-lines -docstring %{
 
         execute-keys -draft -save-regs '' '%y'
 
-        peneira 'lines: ' %{ printf "%s" $kak_quoted_reg_dquote | nl -b 'a' -s ' ' } %{
+        peneira -no-rank 'lines: ' %{ printf "%s" $kak_quoted_reg_dquote | nl -b 'a' -s ' ' } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
     }
