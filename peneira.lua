@@ -83,11 +83,20 @@ local function filter(filename, prompt, rank)
         data = accumulate(data, { matches = matches })
     end
 
+    local highest_score = {1, {}, fzy.get_score_min()}
+
     if rank then
         table.sort(data.matches, function(a, b)
             -- Sort based on the scores. Higher is better.
             return a[3] > b[3]
         end)
+
+    else
+        for _, match in ipairs(data.matches) do
+            if match[3] > highest_score[3] then
+                highest_score = match
+            end
+        end
     end
 
     local positions = {}
@@ -98,7 +107,7 @@ local function filter(filename, prompt, rank)
         filtered[i] = data.lines[item[1]]
     end
 
-    return filtered, positions
+    return filtered, positions, highest_score[1]
 end
 
 local function range_specs(positions)

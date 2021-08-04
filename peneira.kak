@@ -184,7 +184,7 @@ define-command -hidden peneira-filter-buffer -params 2 %{
             addpackagepath(peneira_path)
             local peneira = require "peneira"
 
-            local lines, positions = peneira.filter(filename, prompt, rank)
+            local lines, positions, best_match = peneira.filter(filename, prompt, rank)
 
             if not lines then
                 kak.execute_keys("%d")
@@ -192,7 +192,15 @@ define-command -hidden peneira-filter-buffer -params 2 %{
             end
 
             kak.set_register("P", table.concat(lines, "\n"))
-    		kak.execute_keys('%"PR')
+            kak.execute_keys('%"PR')
+
+            if not rank then
+                -- With no rank of lines, it's less likely that the selected
+                -- line is the desired one. To increase the likelyhood of
+                -- a best match, we automatically select the line with the
+                -- highest score.
+                kak.peneira_select_line(best_match)
+            end
 
             local range_specs = peneira.range_specs(positions)
             if #range_specs == 0 then return end
