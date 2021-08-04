@@ -86,46 +86,88 @@ define-command peneira-lines -docstring %{
         set-register f %opt{filetype}
         # Save current line to make *peneira* buffer also selects it.
         set-register g %val{cursor_line}
+        peneira-lines-configure-buffer
 
-        hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
-            lua %reg{f} %{
-                local type = arg[1] == "kak" and "kakrc" or arg[1]
-                kak.add_highlighter("window/", "ref", type)
-            }
+        # Copy buffer contents to a temporary file.
+        set-register dquote %sh{ mktemp }
+        execute-keys -draft '%<a-|> cat > $kak_reg_dquote<ret>'
 
-            add-highlighter window/ regex ^\s*\d+\s 0:@LineNumbers
+        # Prepend line numbers
+        lua %reg{dquote} %{
+            local filename = arg[1]
+            local file = io.open(filename, 'r')
 
-            # The default face isn't that readable with the filetype highlighter
-            # enabled.
-            set-face window PeneiraMatches +ub
+            if not file then
+                kak.fail("couldn't open temporary file for reading")
+                return
+            end
 
-            # We want that the filter starts with the current line selected.
-            # But, as soon as the user starts typing, the filter needs to select
-            # again the first line and restore the default behaviour. Otherwise,
-            # having the current line always selected would be a bit annoying.
-            #
-            # To detect that the user started typing, we will track changes to
-            # peneira_matches option.
-            peneira-select-line %reg{g}
-            hook -group peneira-lines window WinSetOption peneira_matches=.* %{
-                lua %opt{peneira_matches} %{
-                    if arg[1] > 0 then
-                        -- If the timestamp (that is, the first thing in
-                        -- peneira_matches, hence `arg[1]`) is greater than
-                        -- zero, then the user has just started typing. So,
-                        -- it's time to select the first line again and
-                        -- remove this hook.
-                        kak.remove_hooks("window", "peneira-lines")
-                        kak.peneira_select_line(1)
-                    end
-                }
-            }
+            local lines = {}
+
+            for line in file:lines() do
+                lines[#lines + 1] = line
+            end
+
+            local file = io.open(filename, 'w+')
+
+            if not file then
+                kak.fail("couldn't open temporary file for writting")
+                return
+            end
+
+            -- We are going to compute the padding needed for displaying
+            -- the line numbers.
+            local number_of_digits = math.floor(math.log10(#lines)) + 1
+            -- The format will become "%{#digits}d %s", where {#digits}
+            -- is the number of digits in the biggest line number
+            local format = string.format("%%%dd %%s\n", number_of_digits)
+
+            for i, line in ipairs(lines) do
+                file:write(string.format(format, i, line))
+            end
         }
 
-        execute-keys -draft -save-regs '' '%y'
-
-        peneira -no-rank 'lines: ' %{ printf "%s" $kak_quoted_reg_dquote | nl -b 'a' -s ' ' } %{
+        peneira -no-rank 'lines: ' %{ cat $kak_reg_dquote } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
+        }
+
+        nop %sh{ rm $kak_reg_dquote }
+    }
+}
+
+define-command -hidden peneira-lines-configure-buffer %{
+    hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+        lua %reg{f} %{
+            local filetype = arg[1] == "kak" and "kakrc" or arg[1]
+            kak.add_highlighter("window/", "ref", filetype)
+        }
+
+        add-highlighter window/ regex ^\s*\d+\s 0:@LineNumbers
+
+        # The default face isn't that readable with the filetype highlighter
+        # enabled.
+        set-face window PeneiraMatches +ub
+
+        # We want that the filter starts with the current line selected.
+        # But, as soon as the user starts typing, the filter needs to select
+        # again the first line and restore the default behaviour. Otherwise,
+        # having the current line always selected would be a bit annoying.
+        #
+        # To detect that the user started typing, we will track changes to
+        # peneira_matches option.
+        peneira-select-line %reg{g}
+        hook -group peneira-lines window WinSetOption peneira_matches=.* %{
+            lua %opt{peneira_matches} %{
+                if arg[1] > 0 then
+                    -- If the timestamp (that is, the first thing in
+                    -- peneira_matches, hence `arg[1]`) is greater than
+                    -- zero, then the user has just started typing. So,
+                    -- it's time to select the first line again and
+                    -- remove this hook.
+                    kak.remove_hooks("window", "peneira-lines")
+                    kak.peneira_select_line(1)
+                end
+            }
         }
     }
 }
