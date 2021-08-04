@@ -148,26 +148,7 @@ define-command -hidden peneira-lines-configure-buffer %{
         # enabled.
         set-face window PeneiraMatches +ub
 
-        # We want that the filter starts with the current line selected.
-        # But, as soon as the user starts typing, the filter needs to select
-        # again the first line and restore the default behaviour. Otherwise,
-        # having the current line always selected would be a bit annoying.
-        #
-        # To detect that the user started typing, we will track changes to
-        # peneira_matches option.
+        # Start the filter with the current line selected.
         peneira-select-line %reg{g}
-        hook -group peneira-lines window WinSetOption peneira_matches=.* %{
-            lua %opt{peneira_matches} %{
-                if arg[1] > 0 then
-                    -- If the timestamp (that is, the first thing in
-                    -- peneira_matches, hence `arg[1]`) is greater than
-                    -- zero, then the user has just started typing. So,
-                    -- it's time to select the first line again and
-                    -- remove this hook.
-                    kak.remove_hooks("window", "peneira-lines")
-                    kak.peneira_select_line(1)
-                end
-            }
-        }
     }
 }
