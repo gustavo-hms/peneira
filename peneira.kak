@@ -4,6 +4,7 @@ declare-option -hidden line-specs peneira_flag # used to flag selected line
 declare-option -hidden range-specs peneira_matches # used to highlight matches
 declare-option -hidden str peneira_previous_prompt # used to track changes in prompt
 declare-option -hidden str peneira_temp_file # name of the temp file in sync with buffer contents
+declare-option -hidden str-list peneira_buffer_history # track the last visited buffers
 
 set-face global PeneiraSelected default,rgba:1c1d2122
 set-face global PeneiraFlag LineNumberCursor
@@ -14,6 +15,9 @@ define-command peneira -params 3..4 -docstring %{
     Switches:
         -no-rank  do not rank candidates (respect their ordering).
 } %{
+    # Hack to avoid messing up with `ga` keys
+    peneira-save-last-visited-buffer
+
     lua %arg{@} %{
         local rank = true
 
@@ -85,8 +89,8 @@ define-command -hidden peneira-finder -params 4 %{
 
     } -on-abort %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
-        execute-keys ga
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+        peneira-restore-last-visited-buffer
 
     } %arg{2} %{
         nop %sh{ rm $kak_opt_peneira_temp_file }
@@ -105,6 +109,34 @@ define-command -hidden peneira-finder -params 4 %{
         }
 
         delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+        peneira-restore-last-visited-buffer
+    }
+}
+
+# We are about to save the name of the last visited buffer. This way, after the
+# `peneira` command runs, we can visit that buffer again to be able to go back
+# to it with `ga` if we want to.
+# 
+# This is an ugly hack, but loosing `ga` keys is very annoying. Suggestions to
+# do it in a cleaner way are welcoming.
+define-command -hidden peneira-save-last-visited-buffer %{
+    evaluate-commands -save-regs b %{
+        try %{
+            execute-keys ga
+            set-register b %val{bufname}
+            execute-keys ga
+            set-option buffer peneira_buffer_history %reg{b} %val{bufname}
+        }
+    }
+}
+
+# After running `peneira`, we can now visit the last buffer again to restore the
+# behaviour of `ga`.
+define-command -hidden peneira-restore-last-visited-buffer %{
+    lua %opt{peneira_buffer_history} %{
+        for _, buffer in ipairs(arg) do
+            kak.buffer(buffer)
+        end
     }
 }
 
@@ -168,7 +200,7 @@ define-command -hidden peneira-avoid-buffer-overflow %{
 # arg2: prompt text
 define-command -hidden peneira-filter-buffer -params 2 %{
     evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs P %{
-    lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{@} %{
+        lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{@} %{
             local peneira_path, filename, previous_prompt, rank, prompt = args()
 
             if prompt == previous_prompt then
