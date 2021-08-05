@@ -77,7 +77,6 @@ define-command -hidden peneira-finder -params 4 %{
         # Save current prompt contents to be compared against the prompt of the
         # next iteration
         set-option buffer peneira_previous_prompt "%val{text}"
-        peneira-select-line %opt{peneira_selected_line}
 
 		# It may happen that, filtering out some candidates, the line marked as
 		# selected overflows the buffer.
