@@ -25,6 +25,7 @@ define-command peneira -params 3..4 -docstring %{
             if a == "-no-rank" then
                 rank = false
                 table.remove(arg, i)
+                break
             end
         end
 
@@ -55,7 +56,7 @@ define-command -hidden peneira-finder -params 4 %{
             -- `$kak_buffile` *inside* `$2` and thus `$kak_buffile` won't
             -- be set.
             --
-            -- That's why need to inject the contents of %arg{3} manually
+            -- That's why we need to inject the contents of %arg{3} manually
             -- before executing %sh{}.
             print(string.format([[
                 set-register P %%sh{
