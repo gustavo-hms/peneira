@@ -1,4 +1,5 @@
 local peneira = require 'peneira'
+local dbg = require 'debugger'
 
 local function split_scopes(scope)
     local scopes = {}
@@ -22,6 +23,10 @@ local function new_scope(tag, parent)
     return tag
 end
 
+local function is_scope(tag)
+    return tag.symbols
+end
+
 local function add_to_scope(tag, scope)
     scope.order[#scope.order + 1] = tag
 
@@ -32,19 +37,36 @@ local function add_to_scope(tag, scope)
     return scope
 end
 
-local function subscope(tag, scope)
-    local scope_tag = scope.symbols[tag.scopeKind][tag.scope]
+local function find_tag(name, scope)
+    for i = #scope.order, 1, -1 do
+        local tag = scope.order[i]
+        if tag.name == name then return tag end
+    end
+end
+
+local function subscope(name, kind, scope)
+    local scope_tag
+    local scope_kind = scope.symbols[kind]
+
+    if scope_kind then
+        scope_tag = scope_kind[name]
+    else
+        scope_tag = find_tag(name, scope)
+    end
+
+    if is_scope(scope_tag) then return scope_tag end
+
     return new_scope(scope_tag, scope)
 end
 
 local function add_tag_to_scope(tags, index, scope)
-    if index > #tags then return scope end
+    if index > #tags then return end
 
     local tag = tags[index]
     local scope_path = split_scopes(tag.scope)
 
     if #scope_path > #scope.scope_path then
-        scope = subscope(tag, scope)
+        scope = subscope(scope_path[#scope_path], tag.scopeKind, scope)
 
     elseif #scope_path < #scope.scope_path then
         scope = scope.parent
@@ -56,7 +78,8 @@ end
 
 local function build_tree(tags)
     local toplevel = { symbols = {}, order = {}, scope_path = {} }
-    return add_tag_to_scope(tags, 1, toplevel)
+    add_tag_to_scope(tags, 1, toplevel)
+    return toplevel
 end
 
 local function print_tag(tag, scope_level)
