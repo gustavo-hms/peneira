@@ -93,7 +93,14 @@ local function print_tree(tree, scope_level)
 
     scope_level = scope_level or 0
 
-    for _, tag in ipairs(tree.order) do
+    for i, tag in ipairs(tree.order) do
+        local previous = tree.order[i-1]
+
+        -- Visually group each scope.
+        if previous and (previous.order or tag.order) then
+            print("")
+        end
+
         print_tag(tag, scope_level)
         print_tree(tag, scope_level + 1)
     end
