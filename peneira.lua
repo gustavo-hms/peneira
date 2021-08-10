@@ -124,7 +124,20 @@ local function range_specs(positions)
     return specs
 end
 
+-- Functions to manipulate ctags data
+
+local function read_tags(file)
+    local ctags = io.popen("ctags --output-format=json --sort=no --pattern-length-limit=0 -f - " .. file)
+    local data = ctags:read('a')
+
+    -- Convert JSON objects to lua tables
+    data = data:gsub('("[^"]-"):','[%1]='):gsub("\n", ", ")
+    local chunk = string.format("return {%s}", data)
+    return load(chunk)()
+end
+
 return {
     filter = filter,
     range_specs = range_specs,
+    read_tags = read_tags,
 }
