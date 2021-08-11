@@ -109,7 +109,8 @@ end
 
 local function print_tag(tag, scope_level)
     local indent = string.rep(" ", 4 * scope_level)
-    local info = string.format("%s%s %s", indent, tag.name, tag.kind)
+    local type = tag.typeref and tag.typeref:sub(10) or ""
+    local info = string.format("%s%s %s %s", indent, tag.name, tag.kind, type)
     print(info)
 end
 
