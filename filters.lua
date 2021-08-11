@@ -22,13 +22,14 @@ local function add_to_scope(tag, scope)
     return scope
 end
 
-local function new_scope(name, kind, parent)
+local function new_scope(name, kind, index, parent)
     local scope_path = table.move(parent.scope_path, 1, #parent.scope_path, 1, {})
     scope_path[#scope_path + 1] = name
 
     local tag = {
         name = name,
         kind = kind,
+        index = index,
         parent = parent,
         symbols = {},
         order = {},
@@ -60,7 +61,7 @@ local function find_tag(name, scope)
     end
 end
 
-local function subscope(name, kind, scope)
+local function subscope(name, kind, index, scope)
     local tag
     local scope_kind = scope.symbols[kind]
 
@@ -71,7 +72,7 @@ local function subscope(name, kind, scope)
         tag = find_tag(name, scope)
     end
 
-    if not tag then tag = new_scope(name, kind, scope) end
+    if not tag then tag = new_scope(name, kind, index, scope) end
 
     if is_scope(tag) then return tag end
 
@@ -88,10 +89,12 @@ local function add_tag_to_scope(tags, index, scope)
         return add_tag_to_scope(tags, index + 1, scope)
     end
 
+    tag.index = index
+
     local scope_path = split_scopes(tag.scope)
 
     if #scope_path > #scope.scope_path then
-        scope = subscope(scope_path[#scope_path], tag.scopeKind, scope)
+        scope = subscope(scope_path[#scope_path], tag.scopeKind, index, scope)
 
     elseif #scope_path < #scope.scope_path then
         scope = scope.parent
@@ -109,8 +112,8 @@ end
 
 local function print_tag(tag, scope_level)
     local indent = string.rep(" ", 4 * scope_level)
-    local type = tag.typeref and tag.typeref:sub(10) or ""
-    local info = string.format("%s%s %s %s", indent, tag.name, tag.kind, type)
+    local type = tag.typeref and " : " .. tag.typeref:sub(10) or ""
+    local info = string.format("%s%s %s%s %d", indent, tag.name, tag.kind, type, tag.index)
     print(info)
 end
 

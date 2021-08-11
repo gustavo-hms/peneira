@@ -77,6 +77,22 @@ define-command peneira-tags -docstring %{
     }
 }
 
+define-command peneira-symbols -docstring %{
+    peneira-tags: select a symbol definition for the current buffer
+} %{
+    peneira-symbols-configure-buffer
+
+    peneira 'symbols: ' %{ $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" tags $kak_buffile } %{
+        echo %arg{1}
+    }
+}
+
+define-command -hidden peneira-symbols-configure-buffer %{
+    hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+        add-highlighter window/ regex '\S+ (\w+)(?: : ([^\n]+))? (\d+)' 1:keyword 2:type 3:+i@BufferPadding
+    }
+}
+
 define-command peneira-lines -docstring %{
     peneira-lines: select a line in the current buffer
 } %{
