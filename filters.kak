@@ -46,67 +46,34 @@ define-command peneira-local-files -docstring %{
     }
 }
 
-define-command peneira-tags -docstring %{
-    peneira-tags: select a symbol definition for the current buffer
-} %{
-    peneira 'tags: ' %{ ctags -f - $kak_buffile | sed -r 's/^([^\t]+).+/\1/g' } %{
-        lua %val{bufname} %arg{1} %{
-            local buffer, tag = args()
-            local pattern = "^" .. tag .. "\t.+/^([^/]+)$/"
-
-            local ctags = io.popen("ctags --pattern-length-limit=0 -f - " .. buffer)
-
-            for line in ctags:lines() do
-                -- Extract everything between /^ and $/
-                local match = line:match(pattern)
-
-                if match then
-                    -- Interpret the matched string literally
-                    local search = [[\Q]] .. match .. [[\E]]
-
-                    -- Kakoune interprets everything between angle brackets as
-                    -- a key (like <ret> and <esc>), so searching for thing like
-                    -- Vec<i64> won't work. Thus, we need to cheat a little.
-                    search = search:gsub("<", [[\E.\Q]])
-                    kak.execute_keys("/" .. search .. "<ret>")
-                    kak.execute_keys("s" .. tag .. "<ret>vv")
-                    return
-                end
-            end
-        }
-    }
-}
-
 define-command peneira-symbols -docstring %{
     peneira-tags: select a symbol definition for the current buffer
 } %{
     peneira-symbols-configure-buffer
 
-    peneira 'symbols: ' %{ $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" tags $kak_buffile } %{
-        lua %arg{1} %val{buffile} %{
+    peneira 'symbols: ' %{
+        export LUA_PATH="$kak_opt_peneira_path/?.lua"
+        $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" symbols $kak_buffile
+    } %{
+        lua %arg{1} %val{buffile} %opt{peneira_path} %{
+            local selected, file, peneira_path = args()
+
             addpackagepath(peneira_path)
             local peneira = require "peneira"
 
-            local index = tonumber(arg[1]:match("%d+$"))
-            local tags = peneira.read_tags(arg[2])
-            local selected = tags[index]
-            local pattern = selected.pattern:match("/^([^/]+)$/")
-            -- Interpret the pattern literally
-            local search = [[\Q]] .. pattern .. [[\E]]
-
-            -- Kakoune interprets everything between angle brackets as
-            -- a key (like <ret> and <esc>), so searching for thing like
-            -- Vec<i64> won't work. Thus, we need to cheat a little.
-            search = search:gsub("<", [[\E.\Q]])
-            kak.execute_keys("/" .. search .. "<ret>")
-            kak.execute_keys("s\b" .. selected.name .. "\b<ret>vv")
+            local index = tonumber(selected:match("%d+$"))
+            local tags = peneira.read_tags(file)
+            local tag = tags[index]
+            kak.execute_keys(tag.line .. "gx")
+            kak.execute_keys([[s\b]] .. tag.name .. [[\b<ret>vv]])
         }
     }
 }
 
 define-command -hidden peneira-symbols-configure-buffer %{
     hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
-        add-highlighter window/ regex '\S+ (\w+)(?: : ([^\n]+))? (\d+)' 1:keyword 2:type 3:+di@BufferPadding
+        # The format of each line is: tag kind( : type)?( (scope))? index
+        add-highlighter window/ regex '\S+ (\w+)(?: : ([^()]+))?(?: (\(\S+\)))? (\d+)' 1:keyword 2:type 3:comment 4:+di@BufferPadding
     }
 }
 

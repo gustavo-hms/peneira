@@ -113,7 +113,8 @@ end
 local function print_tag(tag, scope_level)
     local indent = string.rep(" ", 4 * scope_level)
     local type = tag.typeref and " : " .. tag.typeref:sub(10) or ""
-    local info = string.format("%s%s %s%s %d", indent, tag.name, tag.kind, type, tag.index)
+    local scope = tag.scope and string.format(" (%s)", tag.scope) or ""
+    local info = string.format("%s%s %s%s%s %d", indent, tag.name, tag.kind, type, scope, tag.index)
     print(info)
 end
 
@@ -135,7 +136,7 @@ local function print_tree(tree, scope_level)
     end
 end
 
-function tags(file)
+function symbols(file)
     local tags = peneira.read_tags(file)
     local tree = build_tree(tags)
     print_tree(tree)
