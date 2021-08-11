@@ -1,5 +1,4 @@
 local peneira = require 'peneira'
-local dbg = require 'debugger'
 
 local function split_scopes(scope)
     local scopes = {}
@@ -13,7 +12,34 @@ local function split_scopes(scope)
     return scopes
 end
 
-local function new_scope(tag, parent)
+local function add_to_scope(tag, scope)
+    scope.order[#scope.order + 1] = tag
+
+    local kind = scope.symbols[tag.kind] or {}
+    kind[tag.name] = tag
+    scope.symbols[tag.kind] = kind
+
+    return scope
+end
+
+local function new_scope(name, kind, parent)
+    local scope_path = table.move(parent.scope_path, 1, #parent.scope_path, 1, {})
+    scope_path[#scope_path + 1] = name
+
+    local tag = {
+        name = name,
+        kind = kind,
+        parent = parent,
+        symbols = {},
+        order = {},
+        scope_path = scope_path,
+    }
+
+    add_to_scope(tag, parent)
+    return tag
+end
+
+local function new_scope_from_tag(tag, parent)
     tag.symbols = {}
     tag.order = {}
     tag.parent = parent
@@ -27,16 +53,6 @@ local function is_scope(tag)
     return tag.symbols
 end
 
-local function add_to_scope(tag, scope)
-    scope.order[#scope.order + 1] = tag
-
-    local kind = scope.symbols[tag.kind] or {}
-    kind[tag.name] = tag
-    scope.symbols[tag.kind] = kind
-
-    return scope
-end
-
 local function find_tag(name, scope)
     for i = #scope.order, 1, -1 do
         local tag = scope.order[i]
@@ -45,18 +61,21 @@ local function find_tag(name, scope)
 end
 
 local function subscope(name, kind, scope)
-    local scope_tag
+    local tag
     local scope_kind = scope.symbols[kind]
 
     if scope_kind then
-        scope_tag = scope_kind[name]
+        tag = scope_kind[name]
+
     else
-        scope_tag = find_tag(name, scope)
+        tag = find_tag(name, scope)
     end
 
-    if is_scope(scope_tag) then return scope_tag end
+    if not tag then tag = new_scope(name, kind, scope) end
 
-    return new_scope(scope_tag, scope)
+    if is_scope(tag) then return tag end
+
+    return new_scope_from_tag(tag, scope)
 end
 
 local function add_tag_to_scope(tags, index, scope)
