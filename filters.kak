@@ -65,7 +65,21 @@ define-command peneira-symbols -docstring %{
             local tags = peneira.read_tags(file)
             local tag = tags[index]
             kak.execute_keys(tag.line .. "gx")
-            kak.execute_keys([[s\b]] .. tag.name .. [[\b<ret>vv]])
+
+            -- Interpret name literally
+            local name = [[\Q]] .. tag.name .. [[\E]]
+
+            -- Ctags may insert spaces in the name in some cases. For instance,
+            -- if the tag name is `operator==`, ctags converts it to
+            -- `operator ==`. In such cases, a search in the document for
+            -- that name would fail. Thus, we need to make the spaces optional.
+            name = name:gsub("%s", [[\E\s?\Q]])
+
+            -- Kakoune interprets everything between angle brackets as
+            -- a key (like <ret> and <esc>), so searching for thing like
+            -- Vec<i64> won't work. Thus, we need to cheat a little.
+            name = name:gsub("<", [[\E.\Q]])
+            kak.execute_keys("s" .. name .. "<ret>vv")
         }
     }
 }
