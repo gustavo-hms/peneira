@@ -83,13 +83,30 @@ define-command peneira-symbols -docstring %{
     peneira-symbols-configure-buffer
 
     peneira 'symbols: ' %{ $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" tags $kak_buffile } %{
-        echo %arg{1}
+        lua %arg{1} %val{buffile} %{
+            addpackagepath(peneira_path)
+            local peneira = require "peneira"
+
+            local index = tonumber(arg[1]:match("%d+$"))
+            local tags = peneira.read_tags(arg[2])
+            local selected = tags[index]
+            local pattern = selected.pattern:match("/^([^/]+)$/")
+            -- Interpret the pattern literally
+            local search = [[\Q]] .. pattern .. [[\E]]
+
+            -- Kakoune interprets everything between angle brackets as
+            -- a key (like <ret> and <esc>), so searching for thing like
+            -- Vec<i64> won't work. Thus, we need to cheat a little.
+            search = search:gsub("<", [[\E.\Q]])
+            kak.execute_keys("/" .. search .. "<ret>")
+            kak.execute_keys("s\b" .. selected.name .. "\b<ret>vv")
+        }
     }
 }
 
 define-command -hidden peneira-symbols-configure-buffer %{
     hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
-        add-highlighter window/ regex '\S+ (\w+)(?: : ([^\n]+))? (\d+)' 1:keyword 2:type 3:+i@BufferPadding
+        add-highlighter window/ regex '\S+ (\w+)(?: : ([^\n]+))? (\d+)' 1:keyword 2:type 3:+di@BufferPadding
     }
 }
 
