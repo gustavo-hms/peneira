@@ -82,6 +82,12 @@ local function add_tag_to_scope(tags, index, scope)
     if index > #tags then return end
 
     local tag = tags[index]
+
+    if tag.name:sub(1, 6) == "__anon" then
+        -- Ignore anonymous fields
+        return add_tag_to_scope(tags, index + 1, scope)
+    end
+
     local scope_path = split_scopes(tag.scope)
 
     if #scope_path > #scope.scope_path then
