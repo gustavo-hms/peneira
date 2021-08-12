@@ -4,6 +4,8 @@ Peneira is a fuzzy finder for Kakoune. You can use it to write custom filters
 for candidates lists. You can also use its built-in filters, that allow you to
 select files in a directory, symbols in the current document, an so on.
 
+![](assets/peneira-files.gif)
+
 It depends on the [luar](https://github.com/gustavo-hms/luar) plugin. So make
 sure you have it installed first.
 
