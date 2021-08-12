@@ -1,6 +1,6 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 
-provide-module peneira-core %{
+provide-module peneira-core %◍
 
 declare-option -hidden int peneira_selected_line 1 # used to track the selected line
 declare-option -hidden line-specs peneira_flag # used to flag selected line
@@ -276,7 +276,16 @@ define-command -hidden peneira-call -params 1 %{
 }
 
 require-module kak
+require-module sh
 
 add-highlighter shared/kakrc/code/peneira regex (?:\s|\A)\K(peneira|peneira-files|peneira-local-files|peneira-lines|peneira-symbols)(?:(?=\s)|\z) 0:keyword
+add-highlighter shared/kakrc/peneira1 region -recurse '\{' '(^|\h)peneira(?: -no-rank)? "[^"]+" %\{\K' '\}' ref sh
+add-highlighter shared/kakrc/peneira2 region -recurse '\{' '(^|\h)peneira(?: -no-rank)? ''[^'']+'' %\{\K' '\}' ref sh
+add-highlighter shared/kakrc/peneira3 region -recurse '\(' '(^|\h)peneira(?: -no-rank)? "[^"]+" %\(\K' '\)' ref sh
+add-highlighter shared/kakrc/peneira4 region -recurse '\(' '(^|\h)peneira(?: -no-rank)? ''[^'']+'' %\(\K' '\)' ref sh
+add-highlighter shared/kakrc/peneira5 region -recurse '\[' '(^|\h)peneira(?: -no-rank)? "[^"]+" %\[\K' '\]' ref sh
+add-highlighter shared/kakrc/peneira6 region -recurse '\[' '(^|\h)peneira(?: -no-rank)? ''[^'']+'' %\[\K' '\]' ref sh
+add-highlighter shared/kakrc/peneira7 region -recurse '<' '(^|\h)peneira(?: -no-rank)? "[^"]+" %<\K' '>' ref sh
+add-highlighter shared/kakrc/peneira8 region -recurse '<' '(^|\h)peneira(?: -no-rank)? ''[^'']+'' %<\K' '>' ref sh
 
-}
+◍
