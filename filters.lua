@@ -93,11 +93,17 @@ local function add_tag_to_scope(tags, index, scope)
 
     local scope_path = split_scopes(tag.scope)
 
-    if #scope_path > #scope.scope_path then
-        scope = subscope(scope_path[#scope_path], tag.scopeKind, index, scope)
+    if #scope_path == #scope.scope_path and scope_path[#scope_path] ~= scope.scope_path[#scope.scope_path] then
+        return add_tag_to_scope(tags, index, scope.parent)
+    end
 
-    elseif #scope_path < #scope.scope_path then
+    if #scope_path < #scope.scope_path then
         scope = scope.parent
+
+    else
+        while #scope_path > #scope.scope_path do
+            scope = subscope(scope_path[#scope.scope_path + 1], tag.scopeKind, index, scope)
+        end
     end
 
     add_to_scope(tag, scope)
