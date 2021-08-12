@@ -72,7 +72,7 @@ peneira 'files: ' %{ find . } %{
 ----
 
 By default, `peneira-files` uses `fd` to get the list of files. You can change
-that editing `peneira_files_command` option, e.g.:
+that by editing `peneira_files_command` option, e.g.:
 
 ----
 set-option global peneira_files_command "find ."
@@ -114,3 +114,29 @@ For example:
 ----
 set-face global PeneiraMatches +ui
 ----
+
+== Caveats
+
+Peneira tries to remove line numbers when showing candidates, for a cleaner and
+more immersive experience. But, due to how highlighters work on Kakoune, you must
+name the `number-lines` highlighter (if you use it) _exactly_
+`window/number-lines`, like so:
+
+----
+add-highlighter window/number-lines number-lines
+----
+
+Or, say:
+
+----
+add-highlighter window/number-lines number-lines -separator ' ' -hlcursor
+----
+
+Or even:
+
+----
+add-highlighter window/number-lines number-lines -separator ' ' -hlcursor -min-digits 3
+----
+
+The important thing is that it's named `window/number-lines`, otherwise Peneira
+won't be able to remove it.
