@@ -275,4 +275,8 @@ define-command -hidden peneira-call -params 1 %{
     evaluate-commands "%reg{c}"
 }
 
+require-module kak
+
+add-highlighter shared/kakrc/code/peneira regex (?:\s|\A)\K(peneira|peneira-files|peneira-local-files|peneira-lines|peneira-symbols)(?:(?=\s)|\z) 0:keyword
+
 }
