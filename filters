@@ -1,3 +1,5 @@
+#!/usr/bin/env lua
+
 local peneira = require 'peneira'
 
 local function split_scopes(scope)

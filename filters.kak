@@ -53,17 +53,17 @@ define-command peneira-symbols -docstring %{
 
     peneira 'symbols: ' %{
         export LUA_PATH="$kak_opt_peneira_path/?.lua"
-        $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" symbols $kak_buffile
+        env lua=$kak_opt_luar_interpreter "$kak_opt_peneira_path/filters" symbols $kak_buffile
     } %{
         lua %arg{1} %val{buffile} %opt{peneira_path} %{
-            local selected, file, peneira_path = args()
-
-            addpackagepath(peneira_path)
+            addpackagepath(arg[3])
             local peneira = require "peneira"
 
+            local selected, file = args()
             local index = tonumber(selected:match("%d+$"))
             local tags = peneira.read_tags(file)
             local tag = tags[index]
+
             kak.execute_keys(tag.line .. "gx")
 
             -- Interpret name literally
@@ -111,7 +111,7 @@ define-command peneira-lines -docstring %{
 
         peneira -no-rank 'lines: ' %{
             export LUA_PATH="$kak_opt_peneira_path/?.lua"
-            $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" lines $kak_reg_dquote
+            env lua=$kak_opt_luar_interpreter "$kak_quoted_opt_peneira_path/filters" lines $kak_reg_dquote
         } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
