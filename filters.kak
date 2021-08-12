@@ -1,4 +1,8 @@
-# This file defines some ready-to-be-used filters
+provide-module peneira %{
+
+require-module peneira-core
+
+# This file defines some built-in filters
 
 declare-option str peneira_files_command "fd --type file"
 
@@ -137,3 +141,6 @@ define-command -hidden peneira-lines-configure-buffer %{
         peneira-select-line %reg{g}
     }
 }
+
+}
+

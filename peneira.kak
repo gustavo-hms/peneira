@@ -1,4 +1,7 @@
 declare-option -hidden str peneira_path %sh{ dirname $kak_source }
+
+provide-module peneira-core %{
+
 declare-option -hidden int peneira_selected_line 1 # used to track the selected line
 declare-option -hidden line-specs peneira_flag # used to flag selected line
 declare-option -hidden range-specs peneira_matches # used to highlight matches
@@ -257,4 +260,6 @@ define-command -hidden peneira-highlight-matches -params 1.. %{
 # %arg{1} expansion
 define-command -hidden peneira-call -params 1 %{
     evaluate-commands "%reg{c}"
+}
+
 }
