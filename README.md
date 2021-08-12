@@ -32,7 +32,7 @@ showing first the results it thinks the user intended. If you want it respects
 the candidates order instead, you can pass the `-no-rank` switch:
 
 ```
-peneira -no-rank 'buffers: ' %{ printf '%s\n' $kak_buflist } %{
+peneira -no-rank 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{
     buffer %arg{1}
 }
 ```
