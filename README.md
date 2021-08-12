@@ -9,6 +9,32 @@ select files in a directory, symbols in the current document, an so on.
 It depends on the [luar](https://github.com/gustavo-hms/luar) plugin. So make
 sure you have it installed first.
 
+## Highlights
+
+### Multi-client support
+
+![](assets/multiclient.png)
+
+### Multi-word search
+
+You can search using multiple words separated by spaces. Each word matches from the beginning of the line.
+
+![](assets/multiword.png)
+
+### It follows your colorscheme
+
+**Palenight**:
+
+![](assets/palenight.png)
+
+**[Garbo](https://github.com/gustavo-hms/garbo)**:
+
+![](assets/garbo.png)
+
+**Solarized-light**:
+
+![](assets/solarized-light.png)
+
 ## Writting your own filter
 
 You can use the `peneira` command to write a filter for yourself. For instance,
