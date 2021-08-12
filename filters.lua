@@ -102,16 +102,15 @@ local function add_tag_to_scope(tags, index, scope)
     end
 
     tag.index = index
-
     local tag_scope_path = split_scopes(tag.scope)
 
-    while #tag_scope_path < #scope.scope_path do
-        scope = scope.parent
+    if #tag_scope_path < #scope.scope_path then
+        return add_tag_to_scope(tags, index, scope.parent)
     end
 
-    while #tag_scope_path > #scope.scope_path do
-        local subscope_name = tag_scope_path[#scope.scope_path + 1]
-        scope = subscope(subscope_name, tag.scopeKind, index, scope)
+    if #tag_scope_path > #scope.scope_path then
+        local name = tag_scope_path[#scope.scope_path + 1]
+        return add_tag_to_scope(tags, index, subscope(name, tag.scopeKind, index, scope))
     end
 
     -- At this point, we guarantee we are at a scope with the same level as
