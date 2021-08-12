@@ -14,7 +14,7 @@ set-face global PeneiraFlag LineNumberCursor
 set-face global PeneiraMatches value
 
 define-command peneira -params 3..4 -docstring %{
-    peneira [<switches>] <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.
+    peneira [<switches>] <prompt> <candidates> <cmd>: filter candidates provided by <candidates> shell command and then run <cmd> with %arg{1} set to the selected candidate.
     Switches:
         -no-rank  do not rank candidates (respect their ordering).
 } %{
@@ -37,6 +37,19 @@ define-command peneira -params 3..4 -docstring %{
     }
 }
 
+# peneira-finder will do the following:
+#
+#   * create a temporary file to store candidates;
+#   * execute (in the user context, so that shell expansions work as expected)
+#     the shell command that generates candidates (3rd argument) and write the
+#     output to the temporary file;
+#   * create a disposable *peneira* buffer to present the candidates to the
+#     user;
+#   * show a prompt to collect user input and filter candidates accordingly;
+#   * execute kak commands (4th argument) after the user has selected a
+#     candidate.
+#   * delete the disposable buffer and remove the temporary file.
+#
 # arg1: whether to rank candidates
 # arg2: text for prompt
 # arg3: command to generate candidates
