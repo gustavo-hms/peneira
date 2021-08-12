@@ -72,11 +72,23 @@ local function subscope(name, kind, index, scope)
         tag = find_tag(name, scope)
     end
 
-    if not tag then tag = new_scope(name, kind, index, scope) end
+    if not tag then
+        tag = new_scope(name, kind, index, scope)
+    end
 
     if is_scope(tag) then return tag end
 
     return new_scope_from_tag(tag, scope)
+end
+
+local function same_scope(path1, path2)
+    if #path1 ~= #path2 then return false end
+
+    for i in ipairs(path1) do
+        if path1[i] ~= path2[i] then return false end
+    end
+
+    return true
 end
 
 local function add_tag_to_scope(tags, index, scope)
@@ -91,23 +103,28 @@ local function add_tag_to_scope(tags, index, scope)
 
     tag.index = index
 
-    local scope_path = split_scopes(tag.scope)
+    local tag_scope_path = split_scopes(tag.scope)
 
-    if #scope_path == #scope.scope_path and scope_path[#scope_path] ~= scope.scope_path[#scope.scope_path] then
-        return add_tag_to_scope(tags, index, scope.parent)
-    end
-
-    if #scope_path < #scope.scope_path then
+    while #tag_scope_path < #scope.scope_path do
         scope = scope.parent
-
-    else
-        while #scope_path > #scope.scope_path do
-            scope = subscope(scope_path[#scope.scope_path + 1], tag.scopeKind, index, scope)
-        end
     end
 
-    add_to_scope(tag, scope)
-    return add_tag_to_scope(tags, index + 1, scope)
+    while #tag_scope_path > #scope.scope_path do
+        local subscope_name = tag_scope_path[#scope.scope_path + 1]
+        scope = subscope(subscope_name, tag.scopeKind, index, scope)
+    end
+
+    -- At this point, we guarantee we are at a scope with the same level as
+    -- the scope the tag belongs to.
+
+    if same_scope(tag_scope_path, scope.scope_path) then
+        add_to_scope(tag, scope)
+        return add_tag_to_scope(tags, index + 1, scope)
+    end
+
+    -- If the current scope is not the scope the tag belongs to, search for
+    -- a sibling scope.
+    return add_tag_to_scope(tags, index, scope.parent)
 end
 
 local function build_tree(tags)
