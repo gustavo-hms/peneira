@@ -1,8 +1,9 @@
 # Peneira
 
-Peneira is a fuzzy finder for Kakoune. You can use it to write custom filters
-for candidates lists. You can also use its built-in filters, that allow you to
-select files in a directory, symbols in the current document, an so on.
+Peneira is a fuzzy finder for the [Kakoune](https://kakoune.org) editor. You can
+use it to write custom filters for candidates lists. You can also use its built-in
+filters, that allow you to select files in a directory, symbols in the
+current document, an so on.
 
 ![](assets/peneira-files.gif)
 
@@ -17,7 +18,8 @@ sure you have it installed first.
 
 ### Multi-word search
 
-You can search using multiple words separated by spaces. Each word matches from the beginning of the line.
+You can search using multiple words separated by spaces. Each word matches from
+the beginning of the line.
 
 ![](assets/multiword.png)
 
