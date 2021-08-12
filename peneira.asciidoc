@@ -33,7 +33,7 @@ The `peneira` command expects 3 arguments:
 Inside the commands block, the `%arg{1}` expansion refers to the selected line.
 
 By default, `peneira` ranks the candidates according to an internal score,
-showing first the results it thinks the user intended. If you want it respects
+showing first the results it thinks the user intended. If you want that it respects
 the candidates order instead, you can pass the `-no-rank` switch:
 
 ----
@@ -62,7 +62,7 @@ to a specific line in your document.
 The `peneira-files` filter lists files in the current directory, recursively. It
 ignores already opened files, removing them from the candidates list.
 
-If you do want to have even already opened files in the candidates list, you can
+If you do want to have already opened files in the candidates list, you can
 easily implement your own filter:
 
 ----

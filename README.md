@@ -56,7 +56,7 @@ The `peneira` command expects 3 arguments:
 Inside the commands block, the `%arg{1}` expansion refers to the selected line.
 
 By default, `peneira` ranks the candidates according to an internal score,
-showing first the results it thinks the user intended. If you want it respects
+showing first the results it thinks the user intended. If you want that it respects
 the candidates order instead, you can pass the `-no-rank` switch:
 
 ```kak
@@ -89,7 +89,7 @@ to a specific line in your document.
 The `peneira-files` filter lists files in the current directory, recursively. It
 ignores already opened files, removing them from the candidates list.
 
-If you do want to have even already opened files in the candidates list, you can
+If you do want to have already opened files in the candidates list, you can
 easily implement your own filter:
 
 ```kak
@@ -118,7 +118,7 @@ the directory of the currently edited file as the root directory.
 
 ## Installation
 
-Remember Peneira requires Luar, so you must also install it. If you use
+Remember peneira requires [luar](https://github.com/gustavo-hms/luar), so you must also install it. If you use
 [plug.kak](https://github.com/andreyorst/plug.kak):
 
 ```kak
@@ -181,9 +181,9 @@ Or even:
 add-highlighter window/number-lines number-lines -separator ' ' -hlcursor -min-digits 3
 ```
 
-The important thing is that it's named `window/number-lines`, otherwise Peneira
+The important thing is that it's named `window/number-lines`, otherwise peneira
 won't be able to remove it.
 
 ## Acknowledgement
 
-This project wouldn't be possible without swarn's work, [porting the fzy algorithm to lua](https://github.com/swarn/fzy-lua).
+Many thanks to swarn for [porting the fzy algorithm to lua](https://github.com/swarn/fzy-lua).
