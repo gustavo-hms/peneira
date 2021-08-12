@@ -109,42 +109,10 @@ define-command peneira-lines -docstring %{
         set-register dquote %sh{ mktemp }
         execute-keys -draft '%<a-|> cat > $kak_reg_dquote<ret>'
 
-        # Prepend line numbers
-        lua %reg{dquote} %{
-            local filename = arg[1]
-            local file = io.open(filename, 'r')
-
-            if not file then
-                kak.fail("couldn't open temporary file for reading")
-                return
-            end
-
-            local lines = {}
-
-            for line in file:lines() do
-                lines[#lines + 1] = line
-            end
-
-            local file = io.open(filename, 'w+')
-
-            if not file then
-                kak.fail("couldn't open temporary file for writting")
-                return
-            end
-
-            -- We are going to compute the padding needed for displaying
-            -- the line numbers.
-            local number_of_digits = math.floor(math.log10(#lines)) + 1
-            -- The format will become "%{#digits}d %s", where {#digits}
-            -- is the number of digits in the biggest line number
-            local format = string.format("%%%dd %%s\n", number_of_digits)
-
-            for i, line in ipairs(lines) do
-                file:write(string.format(format, i, line))
-            end
-        }
-
-        peneira -no-rank 'lines: ' %{ cat $kak_reg_dquote } %{
+        peneira -no-rank 'lines: ' %{
+            export LUA_PATH="$kak_opt_peneira_path/?.lua"
+            $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" lines $kak_reg_dquote
+        } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
 

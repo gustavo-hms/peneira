@@ -158,10 +158,32 @@ local function print_tree(tree, scope_level)
     end
 end
 
-function symbols(file)
-    local tags = peneira.read_tags(file)
+function symbols(filename)
+    local tags = peneira.read_tags(filename)
     local tree = build_tree(tags)
     print_tree(tree)
+end
+
+function lines(filename)
+    local file = io.open(filename, 'r')
+    if not file then return end
+
+    local lines = {}
+
+    for line in file:lines() do
+        lines[#lines + 1] = line
+    end
+
+    -- We are going to compute the padding needed for displaying
+    -- the line numbers.
+    local number_of_digits = math.floor(math.log10(#lines)) + 1
+    -- The format will become "%{#digits}d %s", where {#digits}
+    -- is the number of digits in the biggest line number
+    local format = string.format("%%%dd %%s", number_of_digits)
+
+    for i, line in ipairs(lines) do
+        print(string.format(format, i, line))
+    end
 end
 
 local command = table.remove(arg, 1)
