@@ -8,7 +8,7 @@ declare-option -hidden str-list peneira_buffer_history # track the last visited 
 
 set-face global PeneiraSelected default,rgba:1c1d2122
 set-face global PeneiraFlag LineNumberCursor
-set-face global PeneiraMatches +u@value
+set-face global PeneiraMatches value
 
 define-command peneira -params 3..4 -docstring %{
     peneira [<switches>] <prompt> <candidates> <cmd>: filter <candidates> and then run <cmd> with %arg{1} set to the selected candidate.

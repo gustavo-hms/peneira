@@ -88,6 +88,9 @@ define-command -hidden peneira-symbols-configure-buffer %{
     hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
         # The format of each line is: tag kind( : type)?( (scope))? index
         add-highlighter window/ regex '\S+ (\w+)(?: : ([^()]+))?(?: (\(\S+\)))? (\d+)' 1:keyword 2:type 3:comment 4:+di@BufferPadding
+        # We need to specify peneira-matches highlighter again to overwrite the
+        # highlighter in the above line.
+        add-highlighter window/peneira-matches ranges peneira_matches
     }
 }
 
