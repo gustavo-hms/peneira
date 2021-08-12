@@ -57,7 +57,7 @@ define-command -hidden peneira-finder -params 4 %{
             -- be set.
             --
             -- That's why we need to inject the contents of %arg{3} manually
-            -- before executing %sh{}.
+            -- before executing set-register.
             print(string.format([[
                 set-register P %%sh{
                     # Execute command that generates candidates, and populate temp file
