@@ -1,5 +1,4 @@
-Peneira
-=======
+= Peneira
 
 Peneira is a fuzzy finder for Kakoune. You can use it to write custom filters
 for candidates lists. You can also use its built-in filters, that allow you to
@@ -109,3 +108,9 @@ overwriting the following faces:
 * `PeneiraSelected`: used to highlight the selected line;
 * `PeneiraFlag`: the appearance of the flag in the left side of the selected line;
 * `PeneiraMatches`: used to highlight matched characters.
+
+For example:
+
+----
+set-face global PeneiraMatches +ui
+----

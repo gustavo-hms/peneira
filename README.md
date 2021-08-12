@@ -120,6 +120,12 @@ overwriting the following faces:
 * `PeneiraFlag`: the appearance of the flag in the left side of the selected line;
 * `PeneiraMatches`: used to highlight matched characters.
 
+For example:
+
+```
+set-face global PeneiraMatches +ui
+```
+
 ## Acknowledgement
 
 This project wouldn't be possible without swarn's work, [porting the fzy algorithm to lua](https://github.com/swarn/fzy-lua).
