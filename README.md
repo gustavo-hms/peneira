@@ -46,13 +46,17 @@ Peneira also comes with predefined filters you can use at will.
 ### peneira-symbols
 
 The `peneira-symbols` filter lists the symbols defined in the current file. You
-can use it to quickly navigate in your code structure. It requires `ctags` for
-symbol extraction.
+can use it to quickly navigate in your code structure. It requires [Universal
+Ctags](https://ctags.io) compiled with JSON support.
+
+![](assets/peneira-symbols.gif)
 
 ### peneira-lines
 
 The `peneira-lines` filter lists lines in the current file. Use it to quickly go
 to a specific line in your document.
+
+![](assets/peneira-lines.gif)
 
 ### peneira-files
 
@@ -68,7 +72,7 @@ peneira 'files: ' %{ find . } %{
 }
 ```
 
-By default, `peneira-files` uses `fd` to get the list of files. You can change
+By default, `peneira-files` uses [fd](https://github.com/sharkdp/fd) to get the list of files. You can change
 that by editing `peneira_files_command` option, e.g.:
 
 ```
