@@ -14,6 +14,9 @@ sure you have it installed first.
 
 ### Multi-client support
 
+Peneira opens its panel in the focused client, and can have many panels working
+independently, one for each client.
+
 ![](assets/multiclient.png)
 
 ### Multi-word search
