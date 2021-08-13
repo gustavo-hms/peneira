@@ -167,13 +167,13 @@ more immersive experience. But, due to how highlighters work on Kakoune, you mus
 name the `number-lines` highlighter (if you use it) _exactly_
 `window/number-lines`, like so:
 
-```
+```kak
 add-highlighter window/number-lines number-lines
 ```
 
 Or, say:
 
-```
+```kak
 add-highlighter window/number-lines number-lines -separator ' ' -hlcursor
 ```
 
