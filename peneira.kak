@@ -55,14 +55,14 @@ define-command peneira -params 3..4 -docstring %{
 # arg3: command to generate candidates
 # arg4: command to execute after selecting candidate
 define-command -hidden peneira-finder -params 4 %{
-    evaluate-commands -save-regs P %{
+    evaluate-commands -save-regs p %{
         lua %arg{3} %{
             -- %arg{3} (the command that generates candidates) may contain
             -- shell expansions. If we use it directly inside %sh{}, Kakoune
             -- doesn't interpret those expansions. E.g., say %arg{3} contains
             -- `cat $kak_buffile`. If we do something like
             --
-            --     set-register P %sh{
+            --     set-register p %sh{
             --         ...
             --         eval "$2" > $file
             --         ...
@@ -75,18 +75,18 @@ define-command -hidden peneira-finder -params 4 %{
             -- That's why we need to inject the contents of %arg{3} manually
             -- before executing set-register.
             print(string.format([[
-                set-register P %%sh{
+                set-register p %%sh{
                     # Execute command that generates candidates, and populate temp file
                     file=$(mktemp)
                     eval "%s" > $file
-                    # Write file name to register P
+                    # Write file name to register p
                     printf "%%s" $file
                 }
             ]], arg[1]))
         }
 
         edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
-        set-option buffer peneira_temp_file %reg{P}
+        set-option buffer peneira_temp_file %reg{p}
     }
 
     peneira-fill-buffer
@@ -104,30 +104,31 @@ define-command -hidden peneira-finder -params 4 %{
 		# selected overflows the buffer.
 		peneira-avoid-buffer-overflow
 
-    } -on-abort %{
-        nop %sh{ rm $kak_opt_peneira_temp_file }
-        delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
-        peneira-restore-last-visited-buffer
-
     } %arg{2} %{
-        nop %sh{ rm $kak_opt_peneira_temp_file }
-        execute-keys ga
+        evaluate-commands -save-regs xz %{
+            # Copy selected line to register x
+            execute-keys %opt{peneira_selected_line}gx_\"xy
 
-        evaluate-commands -save-regs ac %{
-            # Copy selected line to register a
-            evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" %{
-                execute-keys %opt{peneira_selected_line}gx_\"ay
+            # Now, delete *peneira* buffer to call %arg{4} in the context of the
+            # original buffer
+            peneira-clear-environment
+
+            # Copy <cmd> to register z (peneira-call expects <cmd> to be in
+            # register z)
+            set-register z "%arg{4}"
+
+            try %{
+                peneira-call "%reg{x}"
+
+            } catch %{
+                # Kakoune doesn't write errors raised in the prompt to the
+                # *debug* buffer. So we need to do it manually.
+                echo -debug "Error: 'peneira' %val{error}"
+                fail "peneira: error executing filter, check *debug* buffer"
             }
-
-            # Copy <cmd> to register c (peneira-call expects <cmd> to be in
-            # register c)
-            set-register c "%arg{4}"
-            peneira-call "%reg{a}"
         }
 
-        delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
-        peneira-restore-last-visited-buffer
-    }
+    } -on-abort peneira-clear-environment
 }
 
 # We are about to save the name of the last visited buffer. This way, after the
@@ -216,7 +217,7 @@ define-command -hidden peneira-avoid-buffer-overflow %{
 # arg1: whether to rank candidates
 # arg2: prompt text
 define-command -hidden peneira-filter-buffer -params 2 %{
-    evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs P %{
+    evaluate-commands -buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*" -save-regs p %{
         lua %opt{peneira_path} %opt{peneira_temp_file} %opt{peneira_previous_prompt} %arg{@} %{
             local peneira_path, filename, previous_prompt, rank, prompt = args()
 
@@ -240,8 +241,8 @@ define-command -hidden peneira-filter-buffer -params 2 %{
                 return
             end
 
-            kak.set_register("P", table.concat(lines, "\n"))
-            kak.execute_keys('%"PR')
+            kak.set_register("p", table.concat(lines, "\n"))
+            kak.execute_keys('%"pR')
 
             if not rank then
                 -- With no rank of lines, it's less likely that the selected
@@ -260,7 +261,7 @@ define-command -hidden peneira-filter-buffer -params 2 %{
     }
 }
 
-# arg: range specs
+# args: range specs
 define-command -hidden peneira-highlight-matches -params 1.. %{
 	lua %arg{@} %val{timestamp} %{
 		local timestamp = table.remove(arg)
@@ -269,10 +270,18 @@ define-command -hidden peneira-highlight-matches -params 1.. %{
 	}
 }
 
-# Call the command stored in the c register. This way, that command can use the
-# %arg{1} expansion
+define-command -hidden peneira-clear-environment %{
+    nop %sh{ rm $kak_opt_peneira_temp_file }
+    delete-buffer "*peneira%sh{ echo $kak_client | cut -c 7- }*"
+    peneira-restore-last-visited-buffer
+}
+
+# When the user selects some candidate, we want that the provided commands block
+# see the selected line as the %arg{1} expansion. To do so, we pass the selected
+# line as the sole argument of peneira-call. This way, whathever we execute
+# inside peneira-call will have access to this %arg{1} expansion.
 define-command -hidden peneira-call -params 1 %{
-    evaluate-commands "%reg{c}"
+    evaluate-commands "%reg{z}"
 }
 
 require-module kak
