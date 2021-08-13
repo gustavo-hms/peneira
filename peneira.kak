@@ -57,6 +57,7 @@ define-command peneira -params 3..4 -docstring %{
 define-command -hidden peneira-finder -params 4 %{
     evaluate-commands -save-regs p %{
         lua %arg{3} %{
+            local command = arg[1]:gsub([["]],[[\"]])
             -- %arg{3} (the command that generates candidates) may contain
             -- shell expansions. If we use it directly inside %sh{}, Kakoune
             -- doesn't interpret those expansions. E.g., say %arg{3} contains
@@ -82,7 +83,7 @@ define-command -hidden peneira-finder -params 4 %{
                     # Write file name to register p
                     printf "%%s" $file
                 }
-            ]], arg[1]))
+            ]], command))
         }
 
         edit -scratch "*peneira%sh{ echo $kak_client | cut -c 7- }*"
