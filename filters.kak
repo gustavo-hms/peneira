@@ -115,7 +115,7 @@ define-command peneira-lines -docstring %{
 
         peneira -no-rank 'lines: ' %{
             export LUA_PATH="$kak_opt_peneira_path/?.lua"
-            env lua=$kak_opt_luar_interpreter "$kak_quoted_opt_peneira_path/filters" lines $kak_reg_dquote
+            env lua=$kak_opt_luar_interpreter "$kak_opt_peneira_path/filters" lines $kak_reg_dquote
         } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
