@@ -226,6 +226,8 @@ define-command -hidden peneira-filter-buffer -params 2 %{
                 return
             end
 
+            prompt = "" .. prompt -- force it to be a string, since it may be a number
+
             if #prompt == 0 then
                 kak.peneira_fill_buffer()
                 return
