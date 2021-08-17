@@ -101,9 +101,9 @@ define-command -hidden peneira-finder -params 4 %{
         set-option buffer peneira_previous_prompt "%val{text}"
         peneira-select-line %opt{peneira_selected_line}
 
-		# It may happen that, filtering out some candidates, the line marked as
-		# selected overflows the buffer.
-		peneira-avoid-buffer-overflow
+        # It may happen that, filtering out some candidates, the line marked as
+        # selected overflows the buffer.
+        peneira-avoid-buffer-overflow
 
     } %arg{2} %{
         evaluate-commands -save-regs xz %{
@@ -168,24 +168,24 @@ define-command -hidden peneira-fill-buffer %{
 
 # Configure highlighters and mappings
 define-command -hidden peneira-configure-buffer %{
-	remove-highlighter window/number-lines
+    remove-highlighter window/number-lines
     add-highlighter buffer/peneira-matches ranges peneira_matches
     add-highlighter buffer/peneira-flag flag-lines @PeneiraFlag peneira_flag
-	face window PrimaryCursor @PeneiraSelected
+    face window PrimaryCursor @PeneiraSelected
 
-	map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
-	map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
-	map buffer prompt <c-n> "<a-;>: peneira-select-next-line<ret>"
-	map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
-	map buffer prompt <s-tab> "<a-;>: peneira-select-previous-line<ret>"
-	map buffer prompt <c-p> "<a-;>: peneira-select-previous-line<ret>"
+    map buffer prompt <down> "<a-;>: peneira-select-next-line<ret>"
+    map buffer prompt <tab> "<a-;>: peneira-select-next-line<ret>"
+    map buffer prompt <c-n> "<a-;>: peneira-select-next-line<ret>"
+    map buffer prompt <up> "<a-;>: peneira-select-previous-line<ret>"
+    map buffer prompt <s-tab> "<a-;>: peneira-select-previous-line<ret>"
+    map buffer prompt <c-p> "<a-;>: peneira-select-previous-line<ret>"
 }
 
 define-command -hidden peneira-select-line -params 1 %{
     execute-keys "<a-;>%arg{1}g"
     set-option buffer peneira_flag %val{timestamp} "%arg{1}| ❯ "
     set-option buffer peneira_selected_line %arg{1}
-	add-highlighter -override buffer/current-line line %arg{1} PeneiraSelected
+    add-highlighter -override buffer/current-line line %arg{1} PeneiraSelected
 }
 
 define-command -hidden peneira-select-previous-line %{
@@ -259,18 +259,18 @@ define-command -hidden peneira-filter-buffer -params 2 %{
             if #range_specs == 0 then return end
 
             unpack = unpack or table.unpack -- make it compatible with both lua and luajit
-    		kak.peneira_highlight_matches(unpack(range_specs))
-    	}
+            kak.peneira_highlight_matches(unpack(range_specs))
+        }
     }
 }
 
 # args: range specs
 define-command -hidden peneira-highlight-matches -params 1.. %{
-	lua %arg{@} %val{timestamp} %{
-		local timestamp = table.remove(arg)
+    lua %arg{@} %val{timestamp} %{
+        local timestamp = table.remove(arg)
         unpack = unpack or table.unpack
         kak.set_option("buffer", "peneira_matches", timestamp, unpack(arg))
-	}
+    }
 }
 
 define-command -hidden peneira-clear-environment %{
