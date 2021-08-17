@@ -51,13 +51,13 @@ define-command peneira-local-files -docstring %{
 }
 
 define-command peneira-symbols -docstring %{
-    peneira-tags: select a symbol definition for the current buffer
+    peneira-symbols: select a symbol definition for the current buffer
 } %{
     peneira-symbols-configure-buffer
 
     peneira 'symbols: ' %{
         export LUA_PATH="$kak_opt_peneira_path/?.lua"
-        env lua=$kak_opt_luar_interpreter "$kak_opt_peneira_path/filters" symbols $kak_buffile
+        env lua=$kak_opt_luar_interpreter "$kak_opt_peneira_path/filters" symbols "$kak_buffile"
     } %{
         lua %arg{1} %val{buffile} %opt{peneira_path} %{
             addpackagepath(arg[3])

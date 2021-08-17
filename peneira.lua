@@ -127,7 +127,8 @@ end
 -- Functions to manipulate ctags data
 
 local function read_tags(file)
-    local ctags = io.popen("ctags --output-format=json --fields=+n --sort=no -f - " .. file)
+    local command = string.format("ctags --output-format=json --fields=+n --sort=no -f - '%s'", file)
+    local ctags = io.popen(command)
     local data = ctags:read('a')
 
     -- Convert JSON objects to lua tables
