@@ -27,17 +27,6 @@ local peneira = require 'peneira'
 --                             the current one_
 --     }
 
-local function split_scopes(scope)
-    local scopes = {}
-
-    if not scope then return scopes end
-
-    for s in scope:gmatch("[^:./]+") do
-        scopes[#scopes + 1] = s
-    end
-
-    return scopes
-end
 
 local function add_to_scope(tag, scope)
     scope.ordered_children[#scope.ordered_children + 1] = tag
@@ -49,6 +38,31 @@ local function add_to_scope(tag, scope)
     return scope
 end
 
+local function path_from_scope_field(tag)
+    local scopes = {}
+
+    if not tag.scope then return scopes end
+
+    for s in tag.scope:gmatch("[^:./]+") do
+        scopes[#scopes + 1] = s
+    end
+
+    return scopes
+end
+
+-- Every tag can potentially define a new scope
+local function new_scope_from_tag(tag, parent)
+    tag.children = {}
+    tag.ordered_children = {}
+    tag.parent = parent
+    tag.scope_path = path_from_scope_field(tag)
+    tag.scope_path[#tag.scope_path + 1] = tag.name
+
+    return tag
+end
+
+-- Sometimes a scope is referenced but doesn't have an associated tag in
+-- the source file. So we create a dummy tag to represent the referenced scope.
 local function new_scope(name, kind, index, parent)
     local scope_path = table.move(parent.scope_path, 1, #parent.scope_path, 1, {})
     scope_path[#scope_path + 1] = name
@@ -67,19 +81,43 @@ local function new_scope(name, kind, index, parent)
     return tag
 end
 
--- Every tag can potentially define a new scope
-local function new_scope_from_tag(tag, parent)
-    tag.children = {}
-    tag.ordered_children = {}
-    tag.parent = parent
-    tag.scope_path = split_scopes(tag.scope)
-    tag.scope_path[#tag.scope_path + 1] = tag.name
-
-    return tag
-end
-
 local function is_scope(tag)
     return tag.children
+end
+
+local function find_parent(tag, scope)
+    if not scope then return nil end
+
+    if tag.scopeKind == scope.kind then return scope end
+
+    local last_child = scope.ordered_children[#scope.ordered_children]
+
+    if last_child and tag.scopeKind == last_child.kind then
+        return new_scope_from_tag(last_child, scope)
+    end
+
+    return find_parent(tag, scope.parent)
+end
+
+local function scope_path(tag, scope)
+    if not tag.scope then
+        -- Ctags can't properly handle scopes from tags whose names have
+        -- spaces (like headings on an asciidoc file). If the tag doesn't
+        -- have a `scope` field but does have a `scopeKind` field (in which
+        -- case it does belong to some scope), we probably are dealing with
+        -- this ctags limitation. So we will for a parent scope with the same
+        -- kind as `scopeKind`.
+        if tag.scopeKind then
+            local parent = find_parent(tag, scope)
+            tag.scope = table.concat(parent.scope_path, "/")
+
+            return parent.scope_path
+        end
+
+        return {}
+    end
+
+    return path_from_scope_field(tag)
 end
 
 local function find_tag(name, scope)
@@ -130,7 +168,7 @@ local function add_tag_to_scope(tags, index, scope)
     end
 
     tag.index = index
-    local tag_scope_path = split_scopes(tag.scope)
+    local tag_scope_path = scope_path(tag, scope)
 
     if #tag_scope_path < #scope.scope_path then
         return add_tag_to_scope(tags, index, scope.parent)
