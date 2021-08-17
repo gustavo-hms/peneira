@@ -46,8 +46,10 @@ You can use the `peneira` command to write a filter for yourself. For instance,
 here is a simple `buffers` filter to go to a buffer in the buffer list:
 
 ```kak
-peneira 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{
-    buffer %arg{1}
+define-command buffers %{
+    peneira 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{
+        buffer %arg{1}
+    }
 }
 ```
 
