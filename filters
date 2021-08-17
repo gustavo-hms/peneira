@@ -43,6 +43,10 @@ local function path_from_scope_field(tag)
 
     if not tag.scope then return scopes end
 
+    -- In some filetypes (like markdown), ctags uses "" to separate scope
+    -- levels
+    tag.scope = tag.scope:gsub([[""]], "/")
+
     for s in tag.scope:gmatch("[^:./]+") do
         scopes[#scopes + 1] = s
     end
@@ -109,6 +113,8 @@ local function scope_path(tag, scope)
         -- kind as `scopeKind`.
         if tag.scopeKind then
             local parent = find_parent(tag, scope)
+            if not parent then return {} end
+
             tag.scope = table.concat(parent.scope_path, "/")
 
             return parent.scope_path
