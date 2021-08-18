@@ -93,23 +93,26 @@ local function is_scope(tag)
     return tag.children
 end
 
-local function find_parent(tag, scope)
+local function find_parent(tags, index, scope)
     if not scope then return nil end
+
+    local tag = tags[index]
 
     if tag.scopeKind == scope.kind then return scope end
 
-    for i = #scope.ordered_children, 1, -1 do
-        local child = scope.ordered_children[i]
+    for i = index, 1, -1 do
+        local previous = tags[i]
 
-        if child and tag.scopeKind == child.kind then
-            return new_scope_from_tag(child, scope)
+        if previous and tag.scopeKind == previous.kind then
+            if is_scope(previous) then return previous end
+            return new_scope_from_tag(previous, scope)
         end
     end
-
-    return find_parent(tag, scope.parent)
 end
 
-local function scope_path(tag, scope)
+local function scope_path(tags, index, scope)
+    local tag = tags[index]
+
     if not tag.scope then
         -- Ctags can't properly handle scopes from tags whose names have
         -- spaces (like headings on an asciidoc file). If the tag doesn't
@@ -118,7 +121,7 @@ local function scope_path(tag, scope)
         -- this ctags limitation. So we will for a parent scope with the same
         -- kind as `scopeKind`.
         if tag.scopeKind then
-            local parent = find_parent(tag, scope)
+            local parent = find_parent(tags, index, scope)
             if not parent then return {} end
 
             tag.scope = table.concat(parent.scope_path, "/")
@@ -180,7 +183,7 @@ local function add_tag_to_scope(tags, index, scope)
     end
 
     tag.index = index
-    local tag_scope_path = scope_path(tag, scope)
+    local tag_scope_path = scope_path(tags, index, scope)
 
     if #tag_scope_path < #scope.scope_path then
         return add_tag_to_scope(tags, index, scope.parent)
