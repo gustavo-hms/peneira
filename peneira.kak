@@ -2,6 +2,8 @@ declare-option -hidden str peneira_path %sh{ dirname $kak_source }
 
 provide-module peneira-core %◍
 
+require-module luar
+
 declare-option -hidden int peneira_selected_line 1 # used to track the selected line
 declare-option -hidden line-specs peneira_flag # used to flag selected line
 declare-option -hidden range-specs peneira_matches # used to highlight matches
