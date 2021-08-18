@@ -47,7 +47,11 @@ local function path_from_scope_field(tag)
     -- levels
     tag.scope = tag.scope:gsub([[""]], "/")
 
-    for s in tag.scope:gmatch("[^:./]+") do
+    -- If scope name has spaces, it may also contain dots. So, in that case,
+    -- consider only / as a scope separator.
+    local pattern = tag.scope:find("%s") and "[^/]+" or "[^:./]+"
+
+    for s in tag.scope:gmatch(pattern) do
         scopes[#scopes + 1] = s
     end
 
@@ -94,10 +98,12 @@ local function find_parent(tag, scope)
 
     if tag.scopeKind == scope.kind then return scope end
 
-    local last_child = scope.ordered_children[#scope.ordered_children]
+    for i = #scope.ordered_children, 1, -1 do
+        local child = scope.ordered_children[i]
 
-    if last_child and tag.scopeKind == last_child.kind then
-        return new_scope_from_tag(last_child, scope)
+        if child and tag.scopeKind == child.kind then
+            return new_scope_from_tag(child, scope)
+        end
     end
 
     return find_parent(tag, scope.parent)
