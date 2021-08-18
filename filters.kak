@@ -93,9 +93,9 @@ define-command -hidden peneira-symbols-configure-buffer %{
         # tag kind (scope) index
         add-highlighter window/ regex '\S+ (\w+) (\([^)]+\)) (\d+)' 1:keyword 2:comment 3:+di@BufferPadding
         # tag kind : type index
-        add-highlighter window/ regex '\S+ (\w+) : ([^()]+) (\d+)' 1:keyword 2:type 3:+di@BufferPadding
+        add-highlighter window/ regex '\S+ (\w+) : ([^\n]+) (\d+)' 1:keyword 2:type 3:+di@BufferPadding
         # tag kind : type (scope) index
-        add-highlighter window/ regex '\S+ (\w+) : ([^()]+) (\([^)]+\)) (\d+)' 1:keyword 2:type 3:comment 4:+di@BufferPadding
+        add-highlighter window/ regex '\S+ (\w+) : ([^\n]+) (\([^)]+\)) (\d+)' 1:keyword 2:type 3:comment 4:+di@BufferPadding
         # tag kind index
         add-highlighter window/ regex '\S+ (\w+) (\d+)' 1:keyword 2:+di@BufferPadding
 
