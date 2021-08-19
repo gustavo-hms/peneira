@@ -118,12 +118,11 @@ local function scope_path(tags, index, scope)
         -- spaces (like headings on an asciidoc file). If the tag doesn't
         -- have a `scope` field but does have a `scopeKind` field (in which
         -- case it does belong to some scope), we probably are dealing with
-        -- this ctags limitation. So we will for a parent scope with the same
-        -- kind as `scopeKind`.
+        -- this ctags limitation. So we look for a parent scope with the
+        -- same kind as `scopeKind`.
         if tag.scopeKind then
             local parent = find_parent(tags, index, scope)
             if not parent then return {} end
-
             tag.scope = table.concat(parent.scope_path, "/")
 
             return parent.scope_path
