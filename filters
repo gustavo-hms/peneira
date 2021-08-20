@@ -43,9 +43,14 @@ string.split = function(s, separator)
     local start = 1
 
     repeat
-        local index = s:find(separator, start) or #s + 1
-        segments[#segments + 1] = s:sub(start, index - 1)
-        start = index + 2
+        local first, last = s:find(separator, start)
+
+        if not first then
+            first, last = #s + 1, #s + 1
+        end
+
+        segments[#segments + 1] = s:sub(start, first - 1)
+        start = last + 1
     until start > #s
 
     return segments
