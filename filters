@@ -38,24 +38,34 @@ local function add_to_scope(tag, scope)
     return scope
 end
 
+string.split = function(s, separator)
+    local segments = {}
+    local start = 1
+
+    repeat
+        local index = s:find(separator, start) or #s + 1
+        segments[#segments + 1] = s:sub(start, index - 1)
+        start = index + 2
+    until start > #s
+
+    return segments
+end
+
 local function path_from_scope_field(tag)
-    local scopes = {}
+    if not tag.scope then return {} end
 
-    if not tag.scope then return scopes end
-
-    -- In some filetypes (like markdown), ctags uses "" to separate scope
-    -- levels
-    tag.scope = tag.scope:gsub([[""]], "/")
-
-    -- If scope name has spaces, it may also contain dots. So, in that case,
-    -- consider only / as a scope separator.
-    local pattern = tag.scope:find("%s") and "[^/]+" or "[^:./]+"
-
-    for s in tag.scope:gmatch(pattern) do
-        scopes[#scopes + 1] = s
+    -- Some filetypes (e.g. markup languages for documentation) use `""`
+    -- as a scope separator since they can have any of `:`, `.` and `/`
+    -- on their headings.
+    --
+    -- To avoid interpreting those characters as scopes separators (risking
+    -- entering an infinite recursion), we will make the assumption that
+    -- any scope name containing spaces is using `""` as a separator.
+    if tag.scope:find([[""]]) or tag.scope:find("%s") then
+        return tag.scope:split([[""]])
     end
 
-    return scopes
+    return tag.scope:split("[:./]")
 end
 
 -- Every tag can potentially define a new scope
@@ -123,7 +133,7 @@ local function scope_path(tags, index, scope)
         if tag.scopeKind then
             local parent = find_parent(tags, index, scope)
             if not parent then return {} end
-            tag.scope = table.concat(parent.scope_path, "/")
+            tag.scope = table.concat(parent.scope_path, [[""]])
 
             return parent.scope_path
         end
