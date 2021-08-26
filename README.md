@@ -131,12 +131,12 @@ Remember peneira requires [luar](https://github.com/gustavo-hms/luar), so you mu
 ```kak
 plug "gustavo-hms/luar" %{
     plug "gustavo-hms/peneira" %{
-        require-module peneira
+        require-module peneira-core
     }
 }
 ```
 
-Note that you need to require the `peneira` module for its commands to be
+Note that you need to require the `peneira-core` module for its commands to be
 available.
 
 ## Performance tips
