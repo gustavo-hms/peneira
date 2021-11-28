@@ -6,7 +6,7 @@ require-module peneira-core
 
 declare-option str peneira_files_command "fd --type file"
 
-set-face global PeneiraFileName type # used to highlight the file name on peneira-files
+set-face global PeneiraFileName +b # used to highlight the file name on peneira-files
 
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree, ignoring already opened ones.
@@ -23,7 +23,8 @@ define-command peneira-files -docstring %{
 
 define-command -hidden peneira-files-configure-buffer %{
     hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
-        add-highlighter window/ regex '[^/]+$' 0:@PeneiraFileName
+        add-highlighter window/ regex '([^/]+)$' 0:@PeneiraFileName
+        add-highlighter window/ regex '/' 0:comment
         # We need to specify peneira-matches highlighter again to overwrite the
         # highlighter in the above line.
         add-highlighter window/peneira-matches ranges peneira_matches
