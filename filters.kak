@@ -142,7 +142,11 @@ define-command -hidden peneira-lines-configure-buffer %{
 
         # The default face isn't that readable with the filetype highlighter
         # enabled.
-        set-face window PeneiraMatches default,rgba:34363e22+ib
+        try %{
+            set-face window PeneiraMatches default,default,rgb:ef2745+ub
+        } catch %{
+            set-face window PeneiraMatches default,rgba:34363e22+ib
+        }
 
         # Start the filter with the current line selected.
         peneira-select-line %reg{g}
