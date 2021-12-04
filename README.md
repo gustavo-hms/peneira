@@ -158,6 +158,7 @@ overwriting the following faces:
 * `PeneiraSelected`: used to highlight the selected line;
 * `PeneiraFlag`: the appearance of the flag in the left side of the selected line;
 * `PeneiraMatches`: used to highlight matched characters.
+* `PeneiraFileName`: used to highlight the file name on `peneira-files` and `peneira-local-files`.
 
 For example:
 

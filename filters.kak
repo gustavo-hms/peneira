@@ -6,9 +6,13 @@ require-module peneira-core
 
 declare-option str peneira_files_command "fd --type file"
 
+set-face global PeneiraFileName +b # used to highlight the file name on peneira-files
+
 define-command peneira-files -docstring %{
     peneira-files: select a file in the current directory tree, ignoring already opened ones.
 } %{
+    peneira-files-configure-buffer
+
     lua %val{buflist} %opt{peneira_files_command} %{
         local command = table.remove(arg)
         -- Do not list already opened files
@@ -17,9 +21,21 @@ define-command peneira-files -docstring %{
     }
 }
 
+define-command -hidden peneira-files-configure-buffer %{
+    hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+        add-highlighter window/ regex '([^/]+)$' 0:@PeneiraFileName
+        add-highlighter window/ regex '/' 0:comment
+        # We need to specify peneira-matches highlighter again to overwrite the
+        # highlighter in the above line.
+        add-highlighter window/peneira-matches ranges peneira_matches
+    }
+}
+
 define-command peneira-local-files -docstring %{
     peneira-local-files: select a file in the directory tree of the current file, ignoring already opened ones.
 } %{
+    peneira-files-configure-buffer
+
     lua %val{buflist} %val{bufname} %opt{peneira_files_command} %{
         local command = table.remove(arg)
         local current_file = table.remove(arg)
