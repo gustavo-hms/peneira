@@ -285,7 +285,8 @@ function lines(filename)
 
     -- We are going to compute the padding needed for displaying
     -- the line numbers.
-    local number_of_digits = math.floor(math.log10(#lines)) + 1
+    local log = math.log10 or function(x) return math.log(x, 10) end
+    local number_of_digits = math.floor(log(#lines)) + 1
     -- The format will become "%{#digits}d %s", where {#digits}
     -- is the number of digits in the biggest line number
     local format = string.format("%%%dd %%s", number_of_digits)
