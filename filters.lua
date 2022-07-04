@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 -- This executable is an auxiliary tool for peneira-symbols and peneira-lines.
 --
 -- For peneira-symbols, it builds a tree of tags from ctags output to print
