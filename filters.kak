@@ -73,7 +73,7 @@ define-command peneira-symbols -docstring %{
 
     peneira 'symbols: ' %{
         export LUA_PATH="$kak_opt_peneira_path/?.lua"
-        $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" symbols "$kak_buffile"
+        exec $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" symbols "$kak_buffile"
     } %{
         lua %arg{1} %val{buffile} %opt{peneira_path} %{
             addpackagepath(arg[3])
@@ -138,7 +138,7 @@ define-command peneira-lines -docstring %{
 
         peneira -no-rank 'lines: ' %{
             export LUA_PATH="$kak_opt_peneira_path/?.lua"
-            $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" lines $kak_reg_dquote
+            exec $kak_opt_luar_interpreter "$kak_opt_peneira_path/filters.lua" lines $kak_reg_dquote
         } %{
             execute-keys %sh{ echo $1 | awk '{ print $1 }' }gx
         }
