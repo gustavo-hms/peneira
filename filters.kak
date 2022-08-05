@@ -171,7 +171,7 @@ define-command -hidden peneira-lines-configure-buffer %{
 
 declare-option str peneira_grep_command "grep -RHnv ^$ ."
 
-define-command peneira-grep -override %{
+define-command peneira-grep %{
     peneira 'grep: ' %{
         $kak_opt_peneira_grep_command
     } %{
