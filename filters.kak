@@ -169,5 +169,18 @@ define-command -hidden peneira-lines-configure-buffer %{
     }
 }
 
+declare-option str peneira_grep_command "grep -RHnv ^$ ."
+
+define-command peneira-grep -override %{
+    peneira 'grep: ' %{
+        $kak_opt_peneira_grep_command
+    } %{
+        evaluate-commands %sh{
+            file=$( echo ${1} | cut -d ":" -f1-2 | sed 's/:/ /' )
+            printf "edit -existing %s\n" "$file"
+        }
+    }
+}
+
 }
 
