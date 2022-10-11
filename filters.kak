@@ -8,15 +8,28 @@ declare-option str peneira_files_command "fd --type file"
 
 set-face global PeneiraFileName +b # used to highlight the file name on peneira-files
 
-define-command peneira-files -docstring %{
-    peneira-files: select a file in the current directory tree, ignoring already opened ones.
+define-command peneira-files -params ..1 -docstring %{
+    peneira-files: select a file in the current directory tree.
+    Switches:
+        -hide-opened Do not list already opened files.
 } %{
     peneira-files-configure-buffer
 
-    lua %val{buflist} %opt{peneira_files_command} %{
+    lua %arg{1} %val{buflist} %opt{peneira_files_command} %{
+        local hide_opened = false
+
+        if arg[1] == "-hide-opened" then
+            hide_opened = true
+            table.remove(arg, 1)
+        end
+
         local command = table.remove(arg)
-        -- Do not list already opened files
-        command = string.format("%s | grep -Fxv '%s'", command, table.concat(arg, "\n"))
+
+        if hide_opened then
+            -- Do not list already opened files
+            command = string.format("%s | grep -Fxv '%s'", command, table.concat(arg, "\n"))
+        end
+
         kak.peneira("files: ", command, "edit %arg{1}")
     }
 }
