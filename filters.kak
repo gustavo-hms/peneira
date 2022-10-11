@@ -182,5 +182,19 @@ define-command -hidden peneira-lines-configure-buffer %{
     }
 }
 
+try %{
+    require-module mru-files
+
+    define-command peneira-mru %{
+        peneira-files-configure-buffer
+
+        peneira 'mru: ' %{
+            grep "$(pwd)" $kak_config/mru_files.txt | sed -e "s!$(pwd)/!!"
+        } %{
+            edit %arg{1}
+        }
+    }
+}
+
 }
 
