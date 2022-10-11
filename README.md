@@ -93,17 +93,10 @@ to a specific line in your document.
 
 ### peneira-files
 
-The `peneira-files` filter lists files in the current directory, recursively. It
-ignores already opened files, removing them from the candidates list.
+The `peneira-files` filter lists files in the current directory, recursively.
 
-If you do want to have already opened files in the candidates list, you can
-easily implement your own filter:
-
-```kak
-peneira 'files: ' %{ find . } %{
-    edit %arg{1}
-}
-```
+If the switch `-hide-opened` is passed, it ignores already opened files,
+removing them from the candidates list.
 
 By default, `peneira-files` uses [fd](https://github.com/sharkdp/fd) to get the list of files. You can change
 that by editing `peneira_files_command` option, e.g.:
@@ -122,6 +115,21 @@ set-option global peneira_files_command "rg --files"
 
 The `peneira-local-files` filter works like `peneira-files`, except that it uses
 the directory of the currently edited file as the root directory.
+
+
+### peneira-mru
+
+If you have [mru-files](https://gitlab.com/kstr0k/mru-files.kak) installed,
+Peneira will detect it and automatically enable the `peneira-mru` filter, which
+lists recently opened files in the subtree of the current working directory.
+This way, you can easily jump to the most recently used files of the project you
+are currently working on.
+
+Hint: for this command to work best, try increasing the history size of the MRU plugin:
+
+```kak
+set-option global mru_files_max 100
+```
 
 ## Installation
 

@@ -185,7 +185,9 @@ define-command -hidden peneira-lines-configure-buffer %{
 try %{
     require-module mru-files
 
-    define-command peneira-mru %{
+    define-command peneira-mru -docstring %{
+        peneira-mru: select a file among the most recently used ones in the subtree of the current working directory.
+    } %{
         peneira-files-configure-buffer
 
         peneira 'mru: ' %{
