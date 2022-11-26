@@ -109,25 +109,29 @@ define-command -hidden peneira-finder -params 4 %{
 
     } %arg{2} %{
         evaluate-commands -save-regs xz %{
-            # Copy selected line to register x
-            execute-keys %opt{peneira_selected_line}gx_\"xy
-
-            # Now, delete *peneira* buffer to call %arg{4} in the context of the
-            # original buffer
-            peneira-clear-environment
-
-            # Copy <cmd> to register z (peneira-call expects <cmd> to be in
-            # register z)
-            set-register z "%arg{4}"
-
             try %{
-                peneira-call "%reg{x}"
+                # Copy selected line to register x
+                execute-keys %opt{peneira_selected_line}gx_\"xy
 
+                # Now, delete *peneira* buffer to call %arg{4} in the context of the
+                # original buffer
+                peneira-clear-environment
+
+                # Copy <cmd> to register z (peneira-call expects <cmd> to be in
+                # register z)
+                set-register z "%arg{4}"
+
+                try %{
+                    peneira-call "%reg{x}"
+
+                } catch %{
+                    # Kakoune doesn't write errors raised in the prompt to the
+                    # *debug* buffer. So we need to do it manually.
+                    echo -debug "Error: 'peneira' %val{error}"
+                    fail "peneira: error executing filter, check *debug* buffer"
+                }
             } catch %{
-                # Kakoune doesn't write errors raised in the prompt to the
-                # *debug* buffer. So we need to do it manually.
-                echo -debug "Error: 'peneira' %val{error}"
-                fail "peneira: error executing filter, check *debug* buffer"
+                peneira-clear-environment
             }
         }
 
@@ -164,7 +168,7 @@ define-command -hidden peneira-restore-last-visited-buffer %{
 define-command -hidden peneira-fill-buffer %{
     # Populate *peneira* buffer with the contents of the temp file
     execute-keys "%%| cat %opt{peneira_temp_file}<ret>"
-    peneira-select-line %opt{peneira_selected_line}
+        peneira-select-line %opt{peneira_selected_line}
     set-option buffer peneira_matches
 }
 
