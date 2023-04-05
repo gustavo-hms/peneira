@@ -200,6 +200,10 @@ add-highlighter window/number-lines number-lines -separator ' ' -hlcursor -min-d
 The important thing is that it's named `window/number-lines`, otherwise peneira
 won't be able to remove it.
 
+## Third-party filters
+
+You can find a selection of some custom filters implemented by Marko Bauhardt [here](https://codeberg.org/mbauhardt/peneira-filters).
+
 ## Acknowledgement
 
 Many thanks to swarn for [porting the fzy algorithm to lua](https://github.com/swarn/fzy-lua).
