@@ -94,7 +94,8 @@ define-command peneira-symbols -docstring %{
 
             local selected, file = args()
             local index = tonumber(selected:match("%d+$"))
-            local tags = peneira.read_tags(file)
+            local json = peneira.read_tags(file)
+            local tags = peneira.parse_json(json)
             local tag = tags[index]
 
             kak.execute_keys(tag.line .. "gx")
