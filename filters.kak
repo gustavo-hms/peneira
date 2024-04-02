@@ -182,6 +182,25 @@ define-command -hidden peneira-lines-configure-buffer %{
     }
 }
 
+define-command peneira-todo -docstring %{
+    peneira-todo: select a line marked with TODO in your code
+} %{
+    hook -once global WinCreate "\*peneira%sh{ echo $kak_client | cut -c 7- }\*" %{
+        add-highlighter window/ regex '^\S+:\d+:\d+:' 0:comment
+        add-highlighter window/ regex 'TODO|todo' 0:keyword
+        # We need to specify peneira-matches highlighter again to overwrite the
+        # highlighter in the above line.
+        add-highlighter window/peneira-matches ranges peneira_matches
+    }
+
+    peneira 'todo: ' "%opt{grepcmd} 'TODO|todo'" %{
+        lua %arg{1} %{
+            local file, line, column = arg[1]:match("([^:]+):(%d+):(%d+):")
+            kak.edit(file, line, column)
+        }
+    }
+}
+
 try %{
     require-module mru-files
 
