@@ -177,4 +177,135 @@ log function 18]]
 
         assert.are.equal(expected, output)
     end)
+
+    it("should generate symbols for an asciidoc file", function()
+        local tags = {
+            {
+                _type = "tag",
+                name = "Peneira",
+                path = "peneira.asciidoc",
+                pattern = "/^= Peneira$/",
+                line = 1,
+                kind = "chapter"
+            },
+            {
+                _type = "tag",
+                name = "Writting your own filter",
+                path = "peneira.asciidoc",
+                pattern = "/^== Writting your own filter$/",
+                line = 15,
+                kind = "section",
+                scope = "Peneira",
+                scopeKind = "chapter"
+            },
+            {
+                _type = "tag",
+                name = "Built-in filters",
+                path = "peneira.asciidoc",
+                pattern = "/^== Built-in filters$/",
+                line = 47,
+                kind = "section",
+                scope = "Peneira",
+                scopeKind = "chapter"
+            },
+            {
+                _type = "tag",
+                name = "peneira-symbols",
+                path = "peneira.asciidoc",
+                pattern = "/^=== peneira-symbols$/",
+                line = 51,
+                kind = "subsection",
+                scope = "Built-in filters",
+                scopeKind = "section"
+            },
+            {
+                _type = "tag",
+                name = "peneira-lines",
+                path = "peneira.asciidoc",
+                pattern = "/^=== peneira-lines$/",
+                line = 57,
+                kind = "subsection",
+                scope = "Built-in filters",
+                scopeKind = "section"
+            },
+            {
+                _type = "tag",
+                name = "peneira-files",
+                path = "peneira.asciidoc",
+                pattern = "/^=== peneira-files$/",
+                line = 62,
+                kind = "subsection",
+                scope = "Built-in filters",
+                scopeKind = "section"
+            },
+            {
+                _type = "tag",
+                name = "peneira-local-files",
+                path = "peneira.asciidoc",
+                pattern = "/^=== peneira-local-files$/",
+                line = 82,
+                kind = "subsection",
+                scope = "Built-in filters",
+                scopeKind = "section"
+            },
+            {
+                _type = "tag",
+                name = "peneira-mru",
+                path = "peneira.asciidoc",
+                pattern = "/^=== peneira-mru$/",
+                line = 87,
+                kind = "subsection",
+                scope = "Built-in filters",
+                scopeKind = "section"
+            },
+            {
+                _type = "tag",
+                name = "Performance tips",
+                path = "peneira.asciidoc",
+                pattern = "/^== Performance tips$/",
+                line = 101,
+                kind = "section",
+                scope = "Peneira",
+                scopeKind = "chapter"
+            },
+            {
+                _type = "tag",
+                name = "Customization",
+                path = "peneira.asciidoc",
+                pattern = "/^== Customization$/",
+                line = 111,
+                kind = "section",
+                scope = "Peneira",
+                scopeKind = "chapter"
+            },
+            {
+                _type = "tag",
+                name = "Caveats",
+                path = "peneira.asciidoc",
+                pattern = "/^== Caveats$/",
+                line = 128,
+                kind = "section",
+                scope = "Peneira",
+                scopeKind = "chapter"
+            },
+        }
+
+        local output = peneira.display_symbol_tree(tags)
+        local expected = [[
+Peneira chapter 1
+    Writting your own filter section (Peneira) 2
+    Built-in filters section (Peneira) 3
+    Performance tips section (Peneira) 9
+    Customization section (Peneira) 10
+    Caveats section (Peneira) 11
+
+Built-in filters section 4
+    peneira-symbols subsection (Built-in filters) 4
+    peneira-lines subsection (Built-in filters) 5
+    peneira-files subsection (Built-in filters) 6
+    peneira-local-files subsection (Built-in filters) 7
+    peneira-mru subsection (Built-in filters) 8]]
+
+        assert.are.equal(expected, output)
+    end)
 end)
