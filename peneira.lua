@@ -136,7 +136,7 @@ end
 
 function pub.parse_json(json)
     -- Convert JSON objects to lua tables
-    data = json:gsub('("[^"]-"):', '[%1]='):gsub("\n", ", ")
+    data = json:gsub('([{,]%s*)("[^"]-"):', '%1[%2]='):gsub("\n", ", ")
     local chunk = string.format("return {%s}", data)
     return load(chunk)()
 end

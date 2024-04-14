@@ -309,3 +309,28 @@ Built-in filters section 4
         assert.are.equal(expected, output)
     end)
 end)
+
+describe("The conversion from #json", function()
+    it("should generate a table for a python function whose return type is a string", function()
+        local json = [[
+            {"_type": "tag", "name": "from_file", "path": "file.py", "pattern": "/^    def from_file(file_name: str) -> \"Name\":$/", "line": 72, "typeref": "typename:\"Name\"", "kind": "member", "scope": "Name", "scopeKind": "class"}
+        ]]
+
+        local expected = {
+            {
+                _type = "tag",
+                name = "from_file",
+                path = "file.py",
+                pattern = "/^    def from_file(file_name: str) -> \"Name\":$/",
+                line = 72,
+                typeref = "typename:\"Name\"",
+                kind = "member",
+                scope = "Name",
+                scopeKind = "class",
+            }
+        }
+
+        local result = peneira.parse_json(json)
+        assert.are.same(expected, result)
+    end)
+end)
