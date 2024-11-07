@@ -174,7 +174,7 @@ define-command -hidden peneira-fill-buffer %{
 
 # Configure highlighters and mappings
 define-command -hidden peneira-configure-buffer %{
-    remove-highlighter window/number-lines
+    try %{ remove-highlighter window/number-lines }
     add-highlighter buffer/peneira-matches ranges peneira_matches
     add-highlighter buffer/peneira-flag flag-lines @PeneiraFlag peneira_flag
     face window PrimaryCursor @PeneiraSelected
