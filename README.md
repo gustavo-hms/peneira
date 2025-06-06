@@ -47,7 +47,7 @@ here is a simple `buffers` filter to go to a buffer in the buffer list:
 
 ```kak
 define-command buffers %{
-    peneira 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{
+    peneira 'buffers: ' %{ eval "printf '%s\n' $kak_quoted_buflist" } %{
         buffer %arg{1}
     }
 }
