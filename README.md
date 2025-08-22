@@ -116,7 +116,6 @@ set-option global peneira_files_command "rg --files"
 The `peneira-local-files` filter works like `peneira-files`, except that it uses
 the directory of the currently edited file as the root directory.
 
-
 ### peneira-mru
 
 If you have [mru-files](https://gitlab.com/kstr0k/mru-files.kak) installed,
