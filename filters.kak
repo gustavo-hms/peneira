@@ -185,15 +185,35 @@ define-command -hidden peneira-lines-configure-buffer %{
 try %{
     require-module mru-files
 
-    define-command peneira-mru -docstring %{
+    define-command peneira-mru -params ..2 -docstring %{
         peneira-mru: select a file among the most recently used ones in the subtree of the current working directory.
+        Switches:
+            -global       Do not restrict to subtree of the current working directory.
+            -cwd-relative Show relative paths to files under the current working directory. (default unless -global)
     } %{
         peneira-files-configure-buffer
 
-        peneira 'mru: ' %{
-            grep "^$(pwd)" $kak_config/mru_files.txt | sed -e "s!^$(pwd)/!!"
-        } %{
-            edit %arg{1}
+        lua %val{config} %arg{@} %{
+            local global = false
+            local cwd_relative = false
+
+            for i = #arg, 2, -1 do
+                ({
+                    ["-global"]       = function() global       = true end,
+                    ["-cwd-relative"] = function() cwd_relative = true end,
+                })[arg[i]]()
+            end
+
+            if not global then
+                cwd_relative = true
+            end
+
+            local command =
+                (global and "cat" or 'grep "^$(pwd)"') ..
+                " " .. arg[1] .. "/mru_files.txt" ..
+                (cwd_relative and ' | sed -e "s!^$(pwd)/!!"' or "")
+
+            kak.peneira("mru: ", command, "edit %arg{1}")
         }
     }
 }
