@@ -191,7 +191,7 @@ try %{
         peneira-files-configure-buffer
 
         peneira 'mru: ' %{
-            grep "$(pwd)" $kak_config/mru_files.txt | sed -e "s!$(pwd)/!!"
+            grep "^$(pwd)" $kak_config/mru_files.txt | sed -e "s!^$(pwd)/!!"
         } %{
             edit %arg{1}
         }
