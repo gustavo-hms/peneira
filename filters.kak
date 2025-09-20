@@ -188,32 +188,32 @@ try %{
     define-command peneira-mru -params ..2 -docstring %{
         peneira-mru: select a file among the most recently used ones in the subtree of the current working directory.
         Switches:
-            -global       Do not restrict to subtree of the current working directory.
-            -cwd-relative Show relative paths to files under the current working directory. (default unless -global)
+            -global    Do not restrict to subtree of the current working directory.
+            -strip-cwd Show relative paths to files under the current working directory. (default unless -global)
     } %{
         peneira-files-configure-buffer
 
         lua %val{config} %arg{@} %{
             local config = arg[1]
             local global = false
-            local cwd_relative = false
+            local strip_cwd = false
 
             for i = 2, #arg do
                 if arg[i] == "-global" then
                     global = true
-                elseif arg[i] == "-cwd-relative" then
-                    cwd_relative = true
+                elseif arg[i] == "-strip-cwd" then
+                    strip_cwd = true
                 end
             end
 
             if not global then
-                cwd_relative = true
+                strip_cwd = true
             end
 
             local command
             if not global then
                 command = string.format('grep "^$(pwd)" %s/mru_files.txt | sed -e "s!^$(pwd)/!!"', config)
-            elseif cwd_relative then
+            elseif strip_cwd then
                 command = string.format('sed -e "s!^$(pwd)/!!" %s/mru_files.txt', config)
             else
                 command = string.format('cat %s/mru_files.txt', config)
