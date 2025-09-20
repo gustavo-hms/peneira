@@ -194,6 +194,7 @@ try %{
         peneira-files-configure-buffer
 
         lua %val{config} %arg{@} %{
+            local config = arg[1]
             local global = false
             local cwd_relative = false
 
@@ -209,10 +210,14 @@ try %{
                 cwd_relative = true
             end
 
-            local command =
-                (global and "cat" or 'grep "^$(pwd)"') ..
-                " " .. arg[1] .. "/mru_files.txt" ..
-                (cwd_relative and ' | sed -e "s!^$(pwd)/!!"' or "")
+            local command
+            if not global then
+                command = string.format('grep "^$(pwd)" %s/mru_files.txt | sed -e "s!^$(pwd)/!!"', config)
+            elseif cwd_relative then
+                command = string.format('sed -e "s!^$(pwd)/!!" %s/mru_files.txt', config)
+            else
+                command = string.format('cat %s/mru_files.txt', config)
+            end
 
             kak.peneira("mru: ", command, "edit %arg{1}")
         }
