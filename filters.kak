@@ -197,11 +197,12 @@ try %{
             local global = false
             local cwd_relative = false
 
-            for i = #arg, 2, -1 do
-                ({
-                    ["-global"]       = function() global       = true end,
-                    ["-cwd-relative"] = function() cwd_relative = true end,
-                })[arg[i]]()
+            for i = 2, #arg do
+                if arg[i] == "-global" then
+                    global = true
+                elseif arg[i] == "-cwd-relative" then
+                    cwd_relative = true
+                end
             end
 
             if not global then
