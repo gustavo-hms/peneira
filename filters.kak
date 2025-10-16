@@ -206,10 +206,6 @@ try %{
                 end
             end
 
-            if not global then
-                strip_cwd = true
-            end
-
             local command
             if not global then
                 command = string.format('grep "^$(pwd)" %s/mru_files.txt | sed -e "s!^$(pwd)/!!"', config)
