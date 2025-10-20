@@ -116,7 +116,6 @@ set-option global peneira_files_command "rg --files"
 The `peneira-local-files` filter works like `peneira-files`, except that it uses
 the directory of the currently edited file as the root directory.
 
-
 ### peneira-mru
 
 If you have [mru-files](https://gitlab.com/kstr0k/mru-files.kak) installed,
@@ -124,6 +123,11 @@ Peneira will detect it and automatically enable the `peneira-mru` filter, which
 lists recently opened files in the subtree of the current working directory.
 This way, you can easily jump to the most recently used files of the project you
 are currently working on.
+
+The `-global` switch disables the restriction for files inside the current working directory.
+This will cause the full file paths to be shown.
+If you want to strip the current working directory from file paths inside it, you can pass the `-strip-cwd` switch.
+Files outside the current working directory will still be shown with their full paths.
 
 Hint: for this command to work best, try increasing the history size of the MRU plugin:
 
