@@ -137,19 +137,28 @@ set-option global mru_files_max 100
 
 ## Installation
 
-Remember peneira requires [luar](https://github.com/gustavo-hms/luar), so you must also install it. If you use
-[plug.kak](https://github.com/andreyorst/plug.kak):
+Remember peneira requires [luar](https://github.com/gustavo-hms/luar). If you use [Almoxarife](https://github.com/gustavo-hms/almoxarife), you can make this dependency explicit:
+
+```yaml
+luar:
+  location: https://github.com/gustavo-hms/luar
+
+  peneira:
+    location: https://github.com/gustavo-hms/peneira
+```
+
+If, on the other hand, you use [kak-bundle](https://codeberg.org/jdugan6240/kak-bundle), add this to your `kakrc`:
 
 ```kak
-plug "gustavo-hms/luar" %{
-    plug "gustavo-hms/peneira" %{
-        require-module peneira
-    }
+bundle luar "gustavo-hms/luar" %{
+  require-module luar
+}
+
+bundle peneira "gustavo-hms/peneira" %{
+  require-module peneira
 }
 ```
 
-Note that you need to require the `peneira` module for its commands to be
-available.
 
 ## Performance tips
 
